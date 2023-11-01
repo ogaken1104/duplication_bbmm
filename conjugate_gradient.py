@@ -139,7 +139,7 @@ def mpcg_bbmm(
     print_process=False,
     eps=1e-10,
     n_tridiag=10,
-    n_tridiag_iter=20,
+    n_tridiag_iter=10,
 ):
     if not preconditioner:
         preconditioner = IdentityPreconditioner()
@@ -229,6 +229,9 @@ def mpcg_bbmm(
             if print_process:
                 print("converged")
             break
-    return u * rhs_norm, jnp.transpose(
-        t_mat[: last_tridiag_iter + 1, : last_tridiag_iter + 1], (2, 0, 1)
-    )
+    if n_tridiag:
+        return u * rhs_norm, jnp.transpose(
+            t_mat[: last_tridiag_iter + 1, : last_tridiag_iter + 1], (2, 0, 1)
+        )
+    else:
+        return u * rhs_norm
