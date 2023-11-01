@@ -139,7 +139,7 @@ def mpcg_bbmm(
     print_process=False,
     eps=1e-10,
     n_tridiag=10,
-    n_tridiag_iter=10,
+    n_tridiag_iter=20,
 ):
     if not preconditioner:
         preconditioner = IdentityPreconditioner()
