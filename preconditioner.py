@@ -18,6 +18,7 @@ class Preconditioner:
     ):
         if len(matrix) < min_preconditioning_size:
             self.precondition = lambda residual: residual
+            return None
         else:
             self.precondition = self._precondition
         if rank is None:
@@ -40,6 +41,9 @@ class Preconditioner:
         )
         logdet = logdet + (n - k) * jnp.log(self.noise)
         self._precond_logdet_cache = logdet
+        self._precond_lt = (
+            jnp.matmul(piv_chol_self, piv_chol_self.T) + jnp.eye(n) * noise
+        )
 
     def _precondition(self, residual: jnp.array):
         qqt = jnp.matmul(self.q_cache, jnp.matmul(self.q_cache.T, residual))
