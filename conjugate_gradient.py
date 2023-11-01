@@ -6,23 +6,26 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit, lax, vmap
 
+# class IdentityPreconditioner:
+#     def precondition(self, residual: jnp.array):
+#         return residual
 
-class IdentityPreconditioner:
-    def precondition(self, residual: jnp.array):
-        return residual
+
+def precondition_identity(residual: jnp.array):
+    return residual
 
 
 def cg_bbmm(
     A,
     b,
-    preconditioner=None,
+    precondition=None,
     max_iter_cg=1000,
     tolerance=1,
     print_process=False,
     eps=1e-10,
 ):
-    if not preconditioner:
-        preconditioner = IdentityPreconditioner()
+    if not precondition:
+        precondition = precondition_identity
     ### initial setting
     u = jnp.zeros_like(b)  ## current solution
     r0 = b - jnp.matmul(A, u)  ## current residual
@@ -38,7 +41,7 @@ def cg_bbmm(
     # Let's normalize. We'll un-normalize afterwards
     r0 = r0 / rhs_norm
 
-    z0 = preconditioner.precondition(r0)  ## preconditioned residual
+    z0 = precondition(r0)  ## preconditioned residual
     d = z0  ## search direction for next solution
 
     @jit
@@ -48,7 +51,7 @@ def cg_bbmm(
         u = u + alpha * d
         r1 = r0 - alpha * v
 
-        z1 = preconditioner.precondition(r1)
+        z1 = precondition(r1)
         beta = jnp.dot(r1.T, z1) / jnp.dot(r0.T, z0)
         d = z1 + beta * d
         r0 = r1
@@ -74,14 +77,14 @@ def cg_bbmm(
 def bcg_bbmm(
     A,
     rhs,
-    preconditioner=None,
+    precondition=None,
     max_iter_cg=1000,
     tolerance=1,
     print_process=False,
     eps=1e-10,
 ):
-    if not preconditioner:
-        preconditioner = IdentityPreconditioner()
+    if not precondition:
+        preconditioner = precondition_identity
     ### initial setting
     u = jnp.zeros_like(rhs)  ## current solution
     r0 = rhs - jnp.matmul(A, u)  ## current residual
@@ -97,7 +100,7 @@ def bcg_bbmm(
     # Let's normalize. We'll un-normalize afterwards
     r0 = r0 / rhs_norm
 
-    z0 = preconditioner.precondition(r0)  ## preconditioned residual
+    z0 = precondition(r0)  ## preconditioned residual
     d = z0  ## search direction for next solution
 
     @jit
@@ -107,7 +110,7 @@ def bcg_bbmm(
         u = u + jnp.diag(alpha) * d
         r1 = r0 - jnp.diag(alpha) * v
 
-        z1 = preconditioner.precondition(r1)
+        z1 = precondition(r1)
         beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
         d = z1 + jnp.diag(beta) * d
         r0 = r1
@@ -133,7 +136,7 @@ def bcg_bbmm(
 def mpcg_bbmm(
     A,
     rhs,
-    preconditioner=None,
+    precondition=None,
     max_iter_cg=1000,
     tolerance=1,
     print_process=False,
@@ -141,8 +144,8 @@ def mpcg_bbmm(
     n_tridiag=10,
     n_tridiag_iter=20,
 ):
-    if not preconditioner:
-        preconditioner = IdentityPreconditioner()
+    if not precondition:
+        precondition = precondition_identity
 
     num_rows = rhs.shape[-2]
     n_tridiag_iter = min(n_tridiag_iter, num_rows)
@@ -170,7 +173,7 @@ def mpcg_bbmm(
     # Let's normalize. We'll un-normalize afterwards
     r0 = r0 / rhs_norm
 
-    z0 = preconditioner.precondition(r0)  ## preconditioned residual
+    z0 = precondition(r0)  ## preconditioned residual
     d = z0  ## search direction for next solution
 
     @jit
@@ -180,7 +183,7 @@ def mpcg_bbmm(
         u = u + jnp.diag(alpha) * d
         r1 = r0 - jnp.diag(alpha) * v
 
-        z1 = preconditioner.precondition(r1)
+        z1 = precondition(r1)
         beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
         d = z1 + jnp.diag(beta) * d
         r0 = r1
