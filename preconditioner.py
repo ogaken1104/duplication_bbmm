@@ -14,6 +14,12 @@ def setup_preconditioner(
     noise: float = 1e-06,
     min_preconditioning_size: int = 2000,
 ):
+    """
+    function to setup preconditioner
+    most is dupricated from
+    - added_diag_linear_operator.py
+    https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/operators/added_diag_linear_operator.py#L4
+    """
     if len(matrix) < min_preconditioning_size:
         return None, None, None
     if rank is None:

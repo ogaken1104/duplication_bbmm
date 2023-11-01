@@ -4,6 +4,10 @@ from jax import jit, lax, vmap
 
 
 def lanczos_tridiag_to_diag(t_mat):
+    """
+    duplication of lanczos_tridiag_to_diag in lanczos.py
+    https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/utils/lanczos.py#L4
+    """
     eigvals, eigvectors = jnp.linalg.eigh(t_mat)
     mask = eigvals >= 0.0
     eigvectors = eigvectors * jnp.expand_dims(mask, axis=-2)

@@ -24,6 +24,9 @@ def cg_bbmm(
     print_process=False,
     eps=1e-10,
 ):
+    """
+    function to check if we can use simple preconditiond conjugate gradient (PCG) in Algorithm 1, Appendix A.
+    """
     if not precondition:
         precondition = precondition_identity
     ### initial setting
@@ -83,6 +86,9 @@ def bcg_bbmm(
     print_process=False,
     eps=1e-10,
 ):
+    """
+    function to chekck if we can implement batched preconditioned conjuaget gradient Algorithm 2 except for calculating T.
+    """
     if not precondition:
         preconditioner = precondition_identity
     ### initial setting
@@ -144,6 +150,9 @@ def mpcg_bbmm(
     n_tridiag=10,
     n_tridiag_iter=20,
 ):
+    """
+    function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A.
+    """
     if not precondition:
         precondition = precondition_identity
 
@@ -164,7 +173,7 @@ def mpcg_bbmm(
     ## for tridiag
     if n_tridiag:
         t_mat = jnp.zeros((n_tridiag_iter, n_tridiag_iter, n_tridiag))
-        alpha_tridiag_is_zero = jnp.empty(n_tridiag)
+        # alpha_tridiag_is_zero = jnp.empty(n_tridiag)
         alpha_reciprocal = jnp.empty(n_tridiag)
         prev_alpha_reciprocal = jnp.empty_like(alpha_reciprocal)
         prev_beta = jnp.empty_like(alpha_reciprocal)
@@ -176,8 +185,8 @@ def mpcg_bbmm(
     z0 = precondition(r0)  ## preconditioned residual
     d = z0  ## search direction for next solution
 
-    @jit
-    def linear_cg_updates(A, d, r0, z0, u):
+    @partial(jit, static_argnames=["n_tridiag"])
+    def linear_cg_updates(A, d, r0, z0, u, n_tridiag):
         v = jnp.dot(A, d)
         alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
         u = u + jnp.diag(alpha) * d
@@ -186,21 +195,24 @@ def mpcg_bbmm(
         z1 = precondition(r1)
         beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
         d = z1 + jnp.diag(beta) * d
-        r0 = r1
-        z0 = z1
-        return d, r0, z0, u, alpha, beta
+        # r0 = r1
+        # z0 = z1
+
+        alpha_tridiag = jnp.diag(alpha)[:n_tridiag]
+        beta_tridiag = jnp.diag(beta)[:n_tridiag]
+        return d, r1, z1, u, alpha_tridiag, beta_tridiag
 
     for j in range(max_iter_cg):
-        d, r0, z0, u, alpha, beta = linear_cg_updates(A, d, r0, z0, u)
+        d, r0, z0, u, alpha_tridiag, beta_tridiag = linear_cg_updates(
+            A, d, r0, z0, u, n_tridiag
+        )
 
         if n_tridiag and j < n_tridiag_iter and update_tridiag:
-            alpha_tridiag = jnp.diag(alpha)[:n_tridiag]  ## maybe 1:n_tridiag+1 is true
-            beta_tridiag = jnp.diag(beta)[:n_tridiag]
-            alpha_tridiag_is_zero = alpha_tridiag == 0
-            # alpha_tridiag_is_zero = alpha_tridiag < 1e-8 ## need to modify, in ref, eps was 0.
-            alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)
+            ### TODO implement setting coverged alpha_tridiag 0.
+            # alpha_tridiag_is_zero = alpha_tridiag == 0
+            # alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)
             alpha_reciprocal = 1.0 / alpha_tridiag
-            alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)
+            # alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)
 
             # print(alpha_reciprocal)
             if j == 0:
@@ -219,14 +231,15 @@ def mpcg_bbmm(
             prev_beta = beta_tridiag.copy()
 
         r0_norm = jnp.linalg.norm(r0, axis=0)
+        r0_norm_mean = jnp.mean(r0_norm)
         # residual_norm.masked_fill_(rhs_is_zero, 0)
         # torch.lt(residual_norm, stop_updating_after, out=has_converged)
         if print_process:
-            print(f"j={j} r1norm: {jnp.mean(r0_norm)}")
+            print(f"j={j} r1norm: {r0_norm_mean}")
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
         if (
             j >= min(10, max_iter_cg - 1)
-            and jnp.mean(r0_norm) < tolerance
+            and r0_norm_mean < tolerance
             and not (n_tridiag and j < min(n_tridiag_iter, max_iter_cg))
         ):
             if print_process:
