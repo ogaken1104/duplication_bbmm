@@ -17,7 +17,7 @@ def cg_bbmm(
     b,
     preconditioner=None,
     max_iter_cg=20,
-    tolerance=1.0,
+    tolerance=1,
     print_process=False,
     eps=1e-10,
 ):
