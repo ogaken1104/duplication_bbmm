@@ -1,6 +1,6 @@
 import warnings
 from functools import partial
-from typing import Optional
+from typing import Callable, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -10,6 +10,7 @@ from jax import jit, lax, vmap
 # class IdentityPreconditioner:
 #     def precondition(self, residual: jnp.array):
 #         return residual
+warnings.filterwarnings("always")
 
 
 def precondition_identity(residual: jnp.array):
@@ -17,16 +18,17 @@ def precondition_identity(residual: jnp.array):
 
 
 def mpcg_bbmm(
-    A,
-    rhs,
-    precondition=None,
-    max_iter_cg=1000,
-    tolerance=1,
-    print_process=False,
-    eps=1e-10,
-    n_tridiag=10,
-    n_tridiag_iter=20,
-):
+    A: jnp.ndarray,
+    rhs: jnp.ndarray,
+    precondition: Optional[Callable] = None,
+    max_iter_cg: int = 1000,
+    tolerance: float = 1,
+    print_process: bool = False,
+    eps: float = 1e-10,
+    n_tridiag: int = 10,
+    n_tridiag_iter: int = 20,
+    return_iter_cg: bool = False,
+) -> Tuple[jnp.ndarray, ...]:
     """
     function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A.
 
@@ -150,6 +152,7 @@ def mpcg_bbmm(
 
         r0_norm = jnp.linalg.norm(r0, axis=0)
         r0_norm_mean = jnp.mean(r0_norm)
+        converged = r0_norm_mean < tolerance
         # residual_norm.masked_fill_(rhs_is_zero, 0)
         # torch.lt(residual_norm, stop_updating_after, out=has_converged)
         if print_process:
@@ -157,24 +160,37 @@ def mpcg_bbmm(
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
         if (
             j >= min(10, max_iter_cg - 1)
-            and r0_norm_mean < tolerance
+            and converged
             and not (n_tridiag and j < min(n_tridiag_iter, max_iter_cg))
         ):
-            if r0_norm_mean < tolerance:
-                if print_process:
-                    print("converged")
-            else:
-                warnings.warn(
-                    f"Did not converge after {max_iter_cg} iterations. Final residual norm was {r0_norm_mean}.",
-                    UserWarning,
-                )
+            if converged and print_process:
+                print("converged")
             break
+    if not converged:
+        warnings.warn(
+            f"Did not converge after {max_iter_cg} iterations. Final residual norm was {r0_norm_mean}.",
+            UserWarning,
+        )
     if n_tridiag:
-        return u * rhs_norm, jnp.transpose(
-            t_mat[: last_tridiag_iter + 1, : last_tridiag_iter + 1], (2, 0, 1)
+        return (
+            u * rhs_norm,
+            j,
+            jnp.transpose(
+                t_mat[: last_tridiag_iter + 1, : last_tridiag_iter + 1], (2, 0, 1)
+            ),
         )
     else:
-        return u * rhs_norm
+        return u * rhs_norm, j
+    # retval = [u * rhs_norm]
+    # if n_tridiag:
+    #     retval.append(
+    #         jnp.transpose(
+    #             t_mat[: last_tridiag_iter + 1, : last_tridiag_iter + 1], (2, 0, 1)
+    #         )
+    #     )
+    # if return_iter_cg:
+    #     retval.append(j)
+    # return retval
 
 
 def cg_bbmm(
@@ -231,17 +247,17 @@ def cg_bbmm(
         # torch.lt(residual_norm, stop_updating_after, out=has_converged)
         if print_process:
             print(f"j={j} r1norm: {np.linalg.norm(r0_norm)}")
+        converged = jnp.mean(r0_norm) < tolerance
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
-        if j >= min(10, max_iter_cg - 1) and np.mean(r0_norm) < tolerance:
-            if np.mean(r0_norm) < tolerance < tolerance:
-                if print_process:
-                    print("converged")
-            else:
-                warnings.warn(
-                    f"Did not converge after {max_iter_cg} iterations. Final residual norm was {np.mean(r0_norm)}.",
-                    UserWarning,
-                )
+        if j >= min(10, max_iter_cg - 1) and converged:
+            if converged and print_process:
+                print("converged")
             break
+    if not converged:
+        warnings.warn(
+            f"Did not converge after {max_iter_cg} iterations. Final residual norm was {np.mean(r0_norm)}.",
+            UserWarning,
+        )
     return u * rhs_norm
 
 
@@ -299,15 +315,15 @@ def bcg_bbmm(
         # torch.lt(residual_norm, stop_updating_after, out=has_converged)
         if print_process:
             print(f"j={j} r1norm: {jnp.mean(r0_norm)}")
+        converged = jnp.mean(r0_norm) < tolerance
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
-        if j >= min(10, max_iter_cg - 1) and jnp.mean(r0_norm) < tolerance:
-            if jnp.mean(r0_norm) < tolerance:
-                if print_process:
-                    print("converged")
-            else:
-                warnings.warn(
-                    f"Did not converge after {max_iter_cg} iterations. Final residual norm was {jnp.mean(r0_norm)}.",
-                    UserWarning,
-                )
+        if j >= min(10, max_iter_cg - 1) and converged:
+            if converged and print_process:
+                print("converged")
             break
+    if not converged:
+        warnings.warn(
+            f"Did not converge after {max_iter_cg} iterations. Final residual norm was {jnp.mean(r0_norm)}.",
+            UserWarning,
+        )
     return u * rhs_norm
