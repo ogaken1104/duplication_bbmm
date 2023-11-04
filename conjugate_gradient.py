@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 from typing import Optional
 
@@ -54,8 +55,9 @@ def mpcg_bbmm(
     if not precondition:
         precondition = precondition_identity
 
-    num_rows = rhs.shape[-2]
-    n_tridiag_iter = min(n_tridiag_iter, num_rows)
+    if n_tridiag:
+        num_rows = rhs.shape[-2]
+        n_tridiag_iter = min(n_tridiag_iter, num_rows)
     ### initial setting
     u = jnp.zeros_like(rhs)  ## current solution
     r0 = rhs - jnp.matmul(A, u)  ## current residual
@@ -63,6 +65,7 @@ def mpcg_bbmm(
     # Get the norm of the rhs - used for convergence checks
     # Here we're going to make almost-zero norms actually be 1 (so we don't get divide-by-zero issues)
     # But we'll store which norms were actually close to zero
+    ## TODO implement this respectively for columns
     rhs_norm = jnp.linalg.norm(r0)
     rhs_is_zero = rhs_norm < eps
     if rhs_is_zero:
@@ -100,10 +103,27 @@ def mpcg_bbmm(
         beta_tridiag = jnp.diag(beta)[:n_tridiag]
         return d, r1, z1, u, alpha_tridiag, beta_tridiag
 
+    @jit
+    def linear_cg_updates_no_tridiag(A, d, r0, z0, u):
+        v = jnp.dot(A, d)
+        alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
+        u = u + jnp.diag(alpha) * d
+        r1 = r0 - jnp.diag(alpha) * v
+
+        z1 = precondition(r1)
+        beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
+        d = z1 + jnp.diag(beta) * d
+        r0 = r1
+        z0 = z1
+        return d, r0, z0, u
+
     for j in range(max_iter_cg):
-        d, r0, z0, u, alpha_tridiag, beta_tridiag = linear_cg_updates(
-            A, d, r0, z0, u, n_tridiag
-        )
+        if n_tridiag:
+            d, r0, z0, u, alpha_tridiag, beta_tridiag = linear_cg_updates(
+                A, d, r0, z0, u, n_tridiag
+            )
+        else:
+            d, r0, z0, u = linear_cg_updates_no_tridiag(A, d, r0, z0, u)
 
         if n_tridiag and j < n_tridiag_iter and update_tridiag:
             ### TODO implement setting coverged alpha_tridiag 0.
@@ -140,8 +160,14 @@ def mpcg_bbmm(
             and r0_norm_mean < tolerance
             and not (n_tridiag and j < min(n_tridiag_iter, max_iter_cg))
         ):
-            if print_process:
-                print("converged")
+            if r0_norm_mean < tolerance:
+                if print_process:
+                    print("converged")
+            else:
+                warnings.warn(
+                    f"Did not converge after {max_iter_cg} iterations. Final residual norm was {r0_norm_mean}.",
+                    UserWarning,
+                )
             break
     if n_tridiag:
         return u * rhs_norm, jnp.transpose(
@@ -207,8 +233,14 @@ def cg_bbmm(
             print(f"j={j} r1norm: {np.linalg.norm(r0_norm)}")
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
         if j >= min(10, max_iter_cg - 1) and np.mean(r0_norm) < tolerance:
-            if print_process:
-                print("converged")
+            if np.mean(r0_norm) < tolerance < tolerance:
+                if print_process:
+                    print("converged")
+            else:
+                warnings.warn(
+                    f"Did not converge after {max_iter_cg} iterations. Final residual norm was {np.mean(r0_norm)}.",
+                    UserWarning,
+                )
             break
     return u * rhs_norm
 
@@ -226,7 +258,7 @@ def bcg_bbmm(
     function to chekck if we can implement batched preconditioned conjuaget gradient Algorithm 2 except for calculating T.
     """
     if not precondition:
-        preconditioner = precondition_identity
+        precondition = precondition_identity
     ### initial setting
     u = jnp.zeros_like(rhs)  ## current solution
     r0 = rhs - jnp.matmul(A, u)  ## current residual
@@ -269,7 +301,13 @@ def bcg_bbmm(
             print(f"j={j} r1norm: {jnp.mean(r0_norm)}")
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
         if j >= min(10, max_iter_cg - 1) and jnp.mean(r0_norm) < tolerance:
-            if print_process:
-                print("converged")
+            if jnp.mean(r0_norm) < tolerance:
+                if print_process:
+                    print("converged")
+            else:
+                warnings.warn(
+                    f"Did not converge after {max_iter_cg} iterations. Final residual norm was {jnp.mean(r0_norm)}.",
+                    UserWarning,
+                )
             break
     return u * rhs_norm
