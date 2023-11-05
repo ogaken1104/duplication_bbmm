@@ -8,6 +8,8 @@ def calc_trace(
     """
     function to calculate trace term
     """
+    ### TODO this implementation is not right. need to fix
+    ## see to_dense in stochastic_lq.py
     return (
         jnp.einsum(
             "ij, ij ->",

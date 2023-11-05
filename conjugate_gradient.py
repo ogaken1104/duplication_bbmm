@@ -10,7 +10,7 @@ from jax import jit, lax, vmap
 # class IdentityPreconditioner:
 #     def precondition(self, residual: jnp.array):
 #         return residual
-warnings.filterwarnings("always")
+# warnings.filterwarnings("always")
 
 
 def precondition_identity(residual: jnp.array):
@@ -109,12 +109,19 @@ def mpcg_bbmm(
     def linear_cg_updates_no_tridiag(A, d, r0, z0, u):
         v = jnp.dot(A, d)
         alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
-        u = u + jnp.diag(alpha) * d
-        r1 = r0 - jnp.diag(alpha) * v
+        if alpha.ndim >= 2:
+            u = u + jnp.diag(alpha) * d
+            r1 = r0 - jnp.diag(alpha) * v
+        else:
+            u = u + alpha * d
+            r1 = r0 - alpha * v
 
         z1 = precondition(r1)
         beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
-        d = z1 + jnp.diag(beta) * d
+        if beta.ndim >= 2:
+            d = z1 + jnp.diag(beta) * d
+        else:
+            d = z1 + beta * d
         r0 = r1
         z0 = z1
         return d, r0, z0, u
@@ -168,7 +175,7 @@ def mpcg_bbmm(
             break
     if not converged:
         warnings.warn(
-            f"Did not converge after {max_iter_cg} iterations. Final residual norm was {r0_norm_mean}.",
+            f"Did not converge after {max_iter_cg} iterations. Final residual norm was {r0_norm_mean}. consider raising max_cg_iter or rank of the preconditioner.",
             UserWarning,
         )
     if n_tridiag:

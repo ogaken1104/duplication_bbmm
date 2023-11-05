@@ -1,2 +1,5 @@
 *.pyc
 *checkpoint*
+*.sh
+*.out
+*.err

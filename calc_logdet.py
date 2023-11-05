@@ -40,16 +40,16 @@ def to_dense(matrix_shape, eigenvalues, eigenvectors, funcs):
     return results
 
 
-def calc_logdet(matrix_shape, t_mat, preconditioner):
+def calc_logdet(matrix_shape, t_mat, precond_logdet_cache):
     eigvals, eigvectors = lanczos_tridiag_to_diag(t_mat)
     (pinvk_logdet,) = to_dense(
         matrix_shape, eigvals, eigvectors, [lambda x: jnp.log(x)]
     )
 
-    try:
-        logdet_p = preconditioner._precond_logdet_cache
-    except:
+    if precond_logdet_cache is None:
         logdet_p = 0.0
+    else:
+        logdet_p = precond_logdet_cache
 
     logdet = pinvk_logdet + logdet_p
 
