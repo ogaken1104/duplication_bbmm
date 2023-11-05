@@ -13,8 +13,12 @@
 
 ## Todo
 ### must
-- develop a test code
+- ~~develop a test code~~
+- make mmm_A function
+    - ~~for K~~
+    - for $\frac{d\hat{K}_{XX}}{d\theta}$
 - apply optimization stopping for alhpa, beta to obtain better t_mat
+    - ask john for sample code
 - check if trace term is really calculated collectly
 ### should
 - trace termの計算が本当に合っているかわからない
@@ -24,4 +28,6 @@
 
 ## test
 - what to test
-    - ~~each value of linear_solve, log determinant, trace term~~
+    - each value of linear_solve, log determinant, trace term
+- how to test
+    - run `pytest ./test`. then all test in ./test is done
