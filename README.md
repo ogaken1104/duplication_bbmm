@@ -16,8 +16,9 @@
 - ~~develop a test code~~
 - make mmm_A function
     - ~~for K~~
-    - for $\frac{d\hat{K}_{XX}}{d\theta}$
-    - analyze the time complexity
+    - ~~for $\frac{d\hat{K}_{XX}}{d\theta}$~~←computation is not efficient at this point.
+    - ~~analyze the time complexity~~
+- modify mpcg algorithm to receive mmm function and check if we can solve
 - apply optimization stopping for alhpa, beta to obtain better t_mat (cause of low accuracy of log determinat)
     - ask john for sample code
 - check if trace term is really calculated collectly
