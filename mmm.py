@@ -16,7 +16,7 @@ def setup_mmm_K(
     """
     setup function to calculate covariance matrix x right_matrix.
     """
-    Kss = gp_model.trainingKs(theta, r_train)
+    Kss = gp_model.trainingKs(theta)
     for i in range(len(Kss)):
         for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
             Kss[i] = [Kss[j][i]] + Kss[i]
@@ -45,7 +45,7 @@ def setup_mmm_dKdtheta(
     """
 
     def mmm_K_givne_theta(right_matrix, theta):
-        Kss = gp_model.trainingKs(theta, r_train)
+        Kss = gp_model.trainingKs(theta)
         for i in range(len(Kss)):
             for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
                 Kss[i] = [Kss[j][i]] + Kss[i]
