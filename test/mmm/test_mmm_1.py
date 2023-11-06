@@ -19,6 +19,7 @@ import conjugate_gradient as cg
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+import mmm
 import numpy as np
 import pivoted_cholesky as pc
 import preconditioner as precond
@@ -26,7 +27,6 @@ import stopro.GP.gp_sinusoidal_independent as gp_sinusoidal_independent
 from calc_three_terms import calc_three_terms
 from jax import grad, jit, lax, vmap
 from jax.config import config
-from mmm import mmm
 from stopro.data_generator.sinusoidal import Sinusoidal
 from stopro.data_handler.data_handle_module import *
 from stopro.data_preparer.data_preparer import DataPreparer
@@ -36,7 +36,8 @@ from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
 
 config.update("jax_enable_x64", True)
-tol_rel_error = 1e-04
+tol_rel_error = 1e-08
+tol_abs_error = 1e-08
 
 
 def is_positive_definite(matrix):
@@ -136,26 +137,61 @@ def calc_K_x_right_matrix(
         jax.random.PRNGKey(0), (params_prepare["num_points"]["training"]["sum"], 11)
     )
 
-    Ks = gp_model.trainingKs(init, r_train)
-    for i in range(len(Ks)):
-        for j in list(range(len(Ks) - len(Ks[i])))[::-1]:
-            Ks[i] = [Ks[j][i]] + Ks[i]
-    K_x_right_matrix = mmm(
-        r_train, r_train, right_matrix, Ks, gp_model.sec_tr, gp_model.sec_tr
+    # Ks = gp_model.trainingKs(init, r_train)
+    # for i in range(len(Ks)):
+    #     for j in list(range(len(Ks) - len(Ks[i])))[::-1]:
+    #         Ks[i] = [Ks[j][i]] + Ks[i]
+
+    mmm_K = mmm.setup_mmm_K(
+        r_train=r_train,
+        gp_model=gp_model,
+        theta=init,
+        jiggle=params_model["epsilon"],
     )
+    K_x_right_matrix = mmm_K(right_matrix=right_matrix)
 
     K = gp_model.trainingK_all(init, r_train)
+    K = gp_model.add_eps_to_sigma(K, params_model["epsilon"], noise_parameter=None)
     K_x_right_matrix_naive = jnp.matmul(K, right_matrix)
 
     mean_rel_error = jnp.mean(
-        jnp.abs(K_x_right_matrix_naive - K_x_right_matrix) / K_x_right_matrix_naive
+        jnp.abs((K_x_right_matrix_naive - K_x_right_matrix) / K_x_right_matrix_naive)
     )
-    return mean_rel_error
+
+    mmm_dKdtheta = mmm.setup_mmm_dKdtheta(
+        r_train, gp_model, init, params_model["epsilon"]
+    )
+    dKdtheta_x_right_matrix = mmm_dKdtheta(right_matrix=right_matrix)
+
+    def calc_trainingK(theta):
+        Σ = gp_model.trainingK_all(theta, r_train)
+        Σ = gp_model.add_eps_to_sigma(Σ, params_model["epsilon"], noise_parameter=None)
+        return Σ
+
+    dKdtheta = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
+    dKdtheta_x_right_matrix_ref = jnp.matmul(dKdtheta, right_matrix)
+
+    mean_abs_error_dKdtheta = jnp.mean(
+        jnp.abs(
+            (
+                dKdtheta_x_right_matrix_ref
+                - jnp.transpose(dKdtheta_x_right_matrix, (2, 0, 1))
+            )
+        )
+    )
+
+    return mean_rel_error, mean_abs_error_dKdtheta
+
+
+mean_rel_error, mean_abs_error_dKdtheta = calc_K_x_right_matrix()
 
 
 def test_K_x_right_matrix():
-    mean_rel_error = calc_K_x_right_matrix()
     assert mean_rel_error < tol_rel_error
+
+
+def test_dKdtheta_x_right_matrix():
+    assert mean_abs_error_dKdtheta < tol_abs_error
 
 
 if __name__ == "__main__":

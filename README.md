@@ -17,7 +17,8 @@
 - make mmm_A function
     - ~~for K~~
     - for $\frac{d\hat{K}_{XX}}{d\theta}$
-- apply optimization stopping for alhpa, beta to obtain better t_mat
+    - analyze the time complexity
+- apply optimization stopping for alhpa, beta to obtain better t_mat (cause of low accuracy of log determinat)
     - ask john for sample code
 - check if trace term is really calculated collectly
 ### should
