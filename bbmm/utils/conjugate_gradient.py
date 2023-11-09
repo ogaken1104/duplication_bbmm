@@ -25,7 +25,7 @@ def less_than_for_arr(arr: jnp.array, bool_less_than: jnp.array, eps: float = 1.
         def cond(val):
             return val < eps
 
-        return None, lax.cond(bool_less_than, lambda x: True, cond, operand=val)
+        return None, lax.cond(bool_less_than, cond, cond, operand=val)
 
     xs = [arr, bool_less_than]
     _, bool_less_than = lax.scan(less_than_for_val, None, xs=xs)
@@ -109,14 +109,25 @@ def mpcg_bbmm(
         prev_beta = jnp.empty_like(alpha_reciprocal)
     update_tridiag = True
 
+    ## our own implementation
+    is_zero = jnp.full(r0.shape[1], False)
+
     @partial(jit, static_argnames=["n_tridiag"])
-    def linear_cg_updates(A, d, r0, z0, u, n_tridiag):
+    def linear_cg_updates(A, d, r0, z0, u, n_tridiag, is_zero):
         zeros_num_rhs = jnp.zeros(r0.shape[1])
+        ones_num_rhs = jnp.ones(r0.shape[1])
 
         v = jnp.dot(A, d)
-        alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
+        # alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
+        alpha = jnp.multiply(d, v)
+        alpha = jnp.sum(alpha, axis=0)
+        # is_zero = less_than_for_arr(alpha, bool_less_than=is_zero, eps=eps)
+        is_zero = alpha < eps
+        alpha = lax.select(is_zero, ones_num_rhs, alpha)
+        alpha = jnp.divide(jnp.sum(jnp.multiply(r0, z0), axis=0), alpha)
+        alpha = lax.select(is_zero, zeros_num_rhs, alpha)
 
-        alpha = jnp.diag(alpha)  # only diagonal alpha is used
+        # alpha = jnp.diag(alpha)  # only diagonal alpha is used
         # We'll cancel out any updates by setting alpha=0 for any vector that has already converged
         alpha = lax.select(has_converged, zeros_num_rhs, alpha)
 
@@ -124,14 +135,19 @@ def mpcg_bbmm(
         r1 = r0 - alpha * v
 
         z1 = precondition(r1)
-        beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
-        d = z1 + jnp.diag(beta) * d
+        beta = jnp.multiply(r0, z0)
+        beta = jnp.sum(beta, axis=0)
+        is_zero = beta < eps
+        beta = lax.select(is_zero, ones_num_rhs, beta)
+        beta = jnp.sum(jnp.multiply(r1, z1), axis=0) / beta
+        beta = lax.select(is_zero, zeros_num_rhs, beta)
+        d = z1 + beta * d
         # r0 = r1
         # z0 = z1
 
         alpha_tridiag = alpha[:n_tridiag]
-        beta_tridiag = jnp.diag(beta)[:n_tridiag]
-        return d, r1, z1, u, alpha_tridiag, beta_tridiag
+        beta_tridiag = beta[:n_tridiag]
+        return d, r1, z1, u, alpha_tridiag, beta_tridiag, is_zero
 
     @jit
     def linear_cg_updates_no_tridiag(A, d, r0, z0, u):
@@ -156,18 +172,18 @@ def mpcg_bbmm(
 
     for j in range(max_iter_cg):
         if n_tridiag:
-            d, r0, z0, u, alpha_tridiag, beta_tridiag = linear_cg_updates(
-                A, d, r0, z0, u, n_tridiag
+            d, r0, z0, u, alpha_tridiag, beta_tridiag, is_zero = linear_cg_updates(
+                A, d, r0, z0, u, n_tridiag, is_zero
             )
         else:
             d, r0, z0, u = linear_cg_updates_no_tridiag(A, d, r0, z0, u)
 
         if n_tridiag and j < n_tridiag_iter and update_tridiag:
             ### TODO implement setting coverged alpha_tridiag 0.
-            # alpha_tridiag_is_zero = alpha_tridiag == 0
-            # alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)
+            alpha_tridiag_is_zero = alpha_tridiag == 0
+            alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)
             alpha_reciprocal = 1.0 / alpha_tridiag
-            # alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)
+            alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)
 
             # print(alpha_reciprocal)
             if j == 0:
@@ -176,7 +192,9 @@ def mpcg_bbmm(
                 t_mat = t_mat.at[j, j].set(
                     alpha_reciprocal + prev_beta * prev_alpha_reciprocal
                 )
-                t_mat = t_mat.at[j, j - 1].set(jnp.sqrt(prev_beta) * alpha_reciprocal)
+                t_mat = t_mat.at[j, j - 1].set(
+                    jnp.sqrt(prev_beta) * prev_alpha_reciprocal
+                )
                 t_mat = t_mat.at[j - 1, j].set(t_mat[j, j - 1])
                 if jnp.max(t_mat[j - 1, j]) < 1e-06:
                     update_tridiag = False

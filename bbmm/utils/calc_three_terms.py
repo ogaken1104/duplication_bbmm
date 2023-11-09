@@ -61,6 +61,7 @@ def calc_three_terms(
     max_iter_cg: int = 1000,
     tolerance: float = 0.01,
     scale: float = 1.0,
+    n_tridiag_iter: int = 20,
 ):
     params_main, params_prepare, lbls = load_params(f"{simulation_path}/data_input")
     params_model = params_main["model"]
@@ -155,6 +156,7 @@ def calc_three_terms(
         tolerance=tolerance,
         max_iter_cg=max_iter_cg,
         n_tridiag=n_tridiag,
+        n_tridiag_iter=n_tridiag_iter,
     )
     time_end_mpcg = time.time()
     print(f"mpcg time: {time_end_mpcg - time_start_linear_solve:.3f}")
@@ -188,6 +190,9 @@ def calc_three_terms(
         trace_linalg = jnp.sum(jnp.diag(jnp.matmul(Kinv, dK)))
 
         trace_rel_error_list.append(abs((trace - trace_linalg) / trace_linalg))
+    print(f"trace_rel_error_list: {np.array(trace_rel_error_list)}")
+    print(f"trace: {np.array(trace)}")
+    print(f"trace_linalg: {np.array(trace_linalg)}")
     trace_rel_error = np.mean(np.array(trace_rel_error_list))
 
     return linear_solve_rel_error, logdet_rel_error, trace_rel_error
