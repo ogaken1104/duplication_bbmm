@@ -16,7 +16,7 @@ from stopro.sub_modules.init_modules import get_init, reshape_init
 from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
 
-import bbmm.functions.pivoted_cholesky as pc
+import bbmm.functions.pivoted_cholesky_numpy as pc
 import bbmm.utils.calc_logdet as calc_logdet
 import bbmm.utils.calc_trace as calc_trace
 import bbmm.utils.conjugate_gradient as cg

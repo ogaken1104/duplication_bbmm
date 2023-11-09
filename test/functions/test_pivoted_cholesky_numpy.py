@@ -4,8 +4,7 @@ import numpy as np
 import torch
 from jax.config import config
 
-from bbmm.functions.pivoted_cholesky import pivoted_cholesky
-from bbmm.operators.dense_linear_operator import DenseLinearOp
+from bbmm.functions.pivoted_cholesky_numpy import pivoted_cholesky_numpy
 
 config.update("jax_enable_x64", True)
 
@@ -16,9 +15,9 @@ def generate_K(N, seed=0, noise=1e-06):
     """
     generate positive definite symmetric matrix
     """
-    K = jax.random.normal(jax.random.PRNGKey(seed), (N, N))
-    # # np.random.seed(0)
-    # K = np.random.normal((N, N))
+    # K = jax.random.normal(jax.random.PRNGKey(seed), (N, N))
+    np.random.seed(0)
+    K = np.random.normal((N, N))
     # K = K @ K.T + 30* jnp.eye(N) + noise*jnp.eye(N)
     # K = jnp.dot(K, K.T) + noise*jnp.eye(N)
     # K = jnp.dot(K, K.T) / N
@@ -42,21 +41,19 @@ def is_positive_definite(matrix):
         return False
 
 
-## gpytorch.pivoted_choleskyとpivoted_choleskyが同じ働きをするか確認するテストコードを書いて
-def test_pivoted_cholesky_dense():
+## gpytorch.pivoted_choleskyとpivoted_cholesky_numpyが同じ働きをするか確認するテストコードを書いて
+def test_pivoted_cholesky():
     rank = 5
     N = 10
     # 1.1. 正定値行列の場合
     # 1.1.1. 正定値行列の場合
     A = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-    A_linear_op = DenseLinearOp(A.numpy())
-    L = pivoted_cholesky(A_linear_op, max_iter=rank)
-    L_torch = gpytorch.pivoted_cholesky(A, rank=rank)
+    L = pivoted_cholesky_numpy(A, max_iter=rank)
+    L_torch = gpytorch.pivoted_cholesky(torch.from_numpy(np.array(A)), rank=rank)
     assert jnp.allclose(L, L_torch.numpy())
 
     ## 1.2. ランダムに生成された行列の場合
     K = generate_K(N)
-    K_linear_op = DenseLinearOp(K)
-    L = pivoted_cholesky(K_linear_op, max_iter=rank)
+    L = pivoted_cholesky_numpy(K, max_iter=rank)
     L_torch = gpytorch.pivoted_cholesky(torch.from_numpy(np.array(K)), rank=rank)
     assert jnp.allclose(L, L_torch.numpy())

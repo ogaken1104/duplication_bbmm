@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit, lax, vmap
 
-from bbmm.functions.pivoted_cholesky import pivoted_cholesky_numpy
+from bbmm.functions.pivoted_cholesky_numpy import pivoted_cholesky_numpy
 
 
 def setup_preconditioner(

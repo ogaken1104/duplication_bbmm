@@ -5,7 +5,7 @@ import jax.numpy as jnp
 IndexType = Union[type(Ellipsis), slice, Iterable[int], int]
 
 
-class LinearOperator:
+class LinearOp:
     """
     for simplicity, this class only supports 2D array
     """

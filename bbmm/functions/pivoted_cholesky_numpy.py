@@ -1,12 +1,14 @@
 from functools import partial
 from typing import Optional
 
+# import jax
+# import jax.numpy as jnp
 import numpy as np
 
-from bbmm.operators._linear_operator import LinearOp
+# from jax import jit, lax, vmap
 
 
-def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter=15):
+def pivoted_cholesky_numpy(mat, error_tol=1e-3, return_pivots=None, max_iter=15):
     """
     mat: JAX NumPy array of N x N
 
@@ -17,7 +19,7 @@ def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter
     n = mat.shape[-1]
     max_iter = min(max_iter, n)
 
-    d = np.array(mat._diagonal())
+    d = np.diag(mat).copy()
     orig_error = np.max(d)
     error = np.linalg.norm(d, 1) / orig_error
     pi = np.arange(n)
@@ -41,7 +43,7 @@ def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter
         L_mpim = L[m, pim]
 
         if m + 1 < n:
-            row = apply_permutation(mat, pim, None)
+            row = apply_permutation_numpy(mat, pim, None)
             row = row.flatten()
             pi_i = pi[m + 1 :]
 
@@ -67,7 +69,7 @@ def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter
     return L.T
 
 
-def apply_permutation(
+def apply_permutation_numpy(
     matrix,
     left_permutation,
     right_permutation,
@@ -82,12 +84,8 @@ def apply_permutation(
         # return matrix[
         #     # (*batch_idx, np.expand_dims(left_permutation, -1), np.expand_dims(right_permutation, -2))
         # ]
-        return matrix.__getitem__(
-            (
-                np.expand_dims(left_permutation, -1),
-                # np.expand_dims(right_permutation, -2), ## right permutation is not used at this point, for easier implementation of linear operator
-            )
-        )
-        ## maybe cuase errors when batch is not zero
+        return matrix[left_permutation][right_permutation].reshape(
+            1, -1
+        )  ## maybe cuase errors when batch is not zero
 
     return np.asarray(permute_submatrix(matrix, left_permutation, right_permutation))
