@@ -1,4 +1,5 @@
 import importlib
+import time
 
 import cmocean as cmo
 import jax
@@ -141,9 +142,11 @@ def calc_three_terms(
     dKdtheta = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
 
     ## calc linear solve
+    time_start_linear_solve = time.time()
     precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
         K, rank=rank, min_preconditioning_size=min_preconditioning_size
     )
+    time_end_precondition = time.time()
     Kinvy, j, t_mat = cg.mpcg_bbmm(
         K,
         rhs,
@@ -153,6 +156,11 @@ def calc_three_terms(
         max_iter_cg=max_iter_cg,
         n_tridiag=n_tridiag,
     )
+    time_end_mpcg = time.time()
+    print(f"mpcg time: {time_end_mpcg - time_start_linear_solve:.3f}")
+    print(f"prec time: {time_end_precondition - time_start_linear_solve:.3f}")
+    print(f"cg   time: {time_end_mpcg - time_end_precondition:.3f}")
+    print(f"cg   iter: {j}\n")
     L = jnp.linalg.cholesky(K)
     v = jnp.linalg.solve(L, delta_y_train)
     Kinvy_linalg = jnp.linalg.solve(L.T, v)

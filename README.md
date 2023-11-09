@@ -23,8 +23,9 @@
     - for pivoted cholesky, implementing linear_operator class may be needed
       - can obtain each row, _diagonal, shape, __getitem__, etc.
 - apply optimization stopping for alhpa, beta to obtain better t_mat (cause of low accuracy of log determinat)
-    - has_convergedに基づいてalpha, betaをzeroでmaskする
-      -  さらにそのmaskに基づいてalpha, betaで割り算をするときの計算を変える
+    - has_convergedに基づいてalpha, betaをzeroでmaskする(lax.cond for each val→lax.select)
+      -  さらにそのmaskに基づいてalpha, betaで割り算をするときの計算を変える(lax.select)
+   -  "has_converged"を計算することができるか確かめる、まずはnoprecondの場合から
 - check if trace term is really calculated collectly
 ### should
 - trace termの計算が本当に合っているかわからない
@@ -42,3 +43,7 @@
 ### linear_operator
 - methods:
   - matmul, _diagonal, shape
+
+
+## memo
+we can make mmm firster by using "lax.switch" and "lax.cond" instead of "if" statement.

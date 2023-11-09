@@ -17,6 +17,21 @@ def precondition_identity(residual: jnp.array):
     return residual
 
 
+@jit
+def less_than_for_arr(arr: jnp.array, bool_less_than: jnp.array, eps: float = 1.0):
+    def less_than_for_val(carry, xs):
+        val, bool_less_than = xs
+
+        def cond(val):
+            return val < eps
+
+        return None, lax.cond(bool_less_than, lambda x: True, cond, operand=val)
+
+    xs = [arr, bool_less_than]
+    _, bool_less_than = lax.scan(less_than_for_val, None, xs=xs)
+    return bool_less_than
+
+
 def mpcg_bbmm(
     A: jnp.ndarray,
     rhs: jnp.ndarray,
@@ -28,6 +43,7 @@ def mpcg_bbmm(
     n_tridiag: int = 10,
     n_tridiag_iter: int = 20,
     return_iter_cg: bool = False,
+    stop_updating_after: float = 1e-10,
 ) -> Tuple[jnp.ndarray, ...]:
     """
     function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A.
@@ -62,16 +78,27 @@ def mpcg_bbmm(
         n_tridiag_iter = min(n_tridiag_iter, num_rows)
     ### initial setting
     u = jnp.zeros_like(rhs)  ## current solution
-    r0 = rhs - jnp.matmul(A, u)  ## current residual
 
     # Get the norm of the rhs - used for convergence checks
     # Here we're going to make almost-zero norms actually be 1 (so we don't get divide-by-zero issues)
     # But we'll store which norms were actually close to zero
     ## TODO implement this respectively for columns
-    rhs_norm = jnp.linalg.norm(r0)
+    rhs_norm = jnp.linalg.norm(rhs, axis=0)
     rhs_is_zero = rhs_norm < eps
-    if rhs_is_zero:
-        rhs_norm = 1.0
+    rhs_norm = lax.select(rhs_is_zero, jnp.ones(len(rhs_norm)), rhs_norm)
+    rhs = rhs / rhs_norm
+
+    r0 = rhs - jnp.matmul(A, u)  ## current residual
+
+    # Sometime we're lucky and the preconditioner solves the system right away
+    # Check for convergence
+    r0_norm = jnp.linalg.norm(r0, axis=0)
+    has_converged = (
+        r0_norm < stop_updating_after
+    )  # at this point normal "<" can be used, because we do not jit entirely, in future we should use lax.select
+
+    z0 = precondition(r0)  ## preconditioned residual
+    d = z0  ## search direction for next solution
 
     ## for tridiag
     if n_tridiag:
@@ -81,12 +108,6 @@ def mpcg_bbmm(
         prev_alpha_reciprocal = jnp.empty_like(alpha_reciprocal)
         prev_beta = jnp.empty_like(alpha_reciprocal)
     update_tridiag = True
-
-    # Let's normalize. We'll un-normalize afterwards
-    r0 = r0 / rhs_norm
-
-    z0 = precondition(r0)  ## preconditioned residual
-    d = z0  ## search direction for next solution
 
     @partial(jit, static_argnames=["n_tridiag"])
     def linear_cg_updates(A, d, r0, z0, u, n_tridiag):
@@ -158,10 +179,11 @@ def mpcg_bbmm(
             prev_beta = beta_tridiag.copy()
 
         r0_norm = jnp.linalg.norm(r0, axis=0)
+        r0_norm = lax.select(rhs_is_zero, jnp.zeros(len(r0_norm)), r0_norm)
+        has_converged = r0_norm < stop_updating_after
+
         r0_norm_mean = jnp.mean(r0_norm)
         converged = r0_norm_mean < tolerance
-        # residual_norm.masked_fill_(rhs_is_zero, 0)
-        # torch.lt(residual_norm, stop_updating_after, out=has_converged)
         if print_process:
             print(f"j={j} r1norm: {r0_norm_mean}")
         ## judge convergence, in the source of gpytorch, minimum_iteration is set to 10
@@ -208,6 +230,7 @@ def cg_bbmm(
     tolerance=1,
     print_process=False,
     eps=1e-10,
+    stop_updating_after=1e-10,
 ):
     """
     function to check if we can use simple preconditiond conjugate gradient (PCG) in Algorithm 1, Appendix A.
@@ -228,6 +251,13 @@ def cg_bbmm(
 
     # Let's normalize. We'll un-normalize afterwards
     r0 = r0 / rhs_norm
+
+    # Sometime we're lucky and the preconditioner solves the system right away
+    # Check for convergence
+    r0_norm = jnp.linalg.norm(r0)
+    has_converged = (
+        r0_norm < stop_updating_after
+    )  # at this point normal "<" can be used, because we do not jit entirely, in future we should use lax.select
 
     z0 = precondition(r0)  ## preconditioned residual
     d = z0  ## search direction for next solution
@@ -251,7 +281,8 @@ def cg_bbmm(
 
         r0_norm = jnp.linalg.norm(r0)
         # residual_norm.masked_fill_(rhs_is_zero, 0)
-        # torch.lt(residual_norm, stop_updating_after, out=has_converged)
+        has_converged = r0_norm < stop_updating_after
+
         if print_process:
             print(f"j={j} r1norm: {np.linalg.norm(r0_norm)}")
         converged = jnp.mean(r0_norm) < tolerance
