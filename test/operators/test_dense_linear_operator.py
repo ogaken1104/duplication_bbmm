@@ -1,5 +1,6 @@
 import jax.numpy as jnp
-from operators.dese_linear_operator import DenseLinearOperator
+
+from bbmm.operators.dese_linear_operator import DenseLinearOperator
 
 
 def test_dense_linear_operator():

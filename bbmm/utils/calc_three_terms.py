@@ -1,15 +1,10 @@
 import importlib
 
-import calc_logdet
-import calc_trace
 import cmocean as cmo
-import conjugate_gradient as cg
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
-import pivoted_cholesky as pc
-import preconditioner as precond
 import stopro.GP.gp_sinusoidal_independent as gp_sinusoidal_independent
 from jax import grad, jit, lax, vmap
 from jax.config import config
@@ -20,6 +15,12 @@ from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.init_modules import get_init, reshape_init
 from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
+
+import bbmm.functions.pivoted_cholesky as pc
+import bbmm.utils.calc_logdet as calc_logdet
+import bbmm.utils.calc_trace as calc_trace
+import bbmm.utils.conjugate_gradient as cg
+import bbmm.utils.preconditioner as precond
 
 config.update("jax_enable_x64", True)
 

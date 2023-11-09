@@ -36,3 +36,8 @@
     - each value of linear_solve, log determinant, trace term
 - how to test
     - run `pytest ./test`. then all test in ./test is done
+
+## desing of class
+### linear_operator
+- methods:
+  - matmul, _diagonal, shape

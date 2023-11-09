@@ -12,13 +12,14 @@ print(sys.path)
 
 import jax
 import jax.numpy as jnp
-import mmm
 import numpy as np
 import stopro.GP.gp_sinusoidal_independent as gp_sinusoidal_independent
 from jax.config import config
 from stopro.data_handler.data_handle_module import *
 from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.load_modules import load_data, load_params
+
+import bbmm.utils.mmm as mmm
 
 config.update("jax_enable_x64", True)
 

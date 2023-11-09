@@ -2,7 +2,8 @@
 # Path: duplication_of_bbmm/operators/dese_linear_operator.py
 # Compare this snippet from duplication_of_bbmm/operators/dese_linear_operator.py:
 import jax.numpy as jnp
-from operators._linear_operator import LinearOperator
+
+from bbmm.operators._linear_operator import LinearOperator
 
 
 class DenseLinearOperator(LinearOperator):
