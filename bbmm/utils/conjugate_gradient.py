@@ -111,10 +111,17 @@ def mpcg_bbmm(
 
     @partial(jit, static_argnames=["n_tridiag"])
     def linear_cg_updates(A, d, r0, z0, u, n_tridiag):
+        zeros_num_rhs = jnp.zeros(r0.shape[1])
+
         v = jnp.dot(A, d)
         alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
-        u = u + jnp.diag(alpha) * d
-        r1 = r0 - jnp.diag(alpha) * v
+
+        alpha = jnp.diag(alpha)  # only diagonal alpha is used
+        # We'll cancel out any updates by setting alpha=0 for any vector that has already converged
+        alpha = lax.select(has_converged, zeros_num_rhs, alpha)
+
+        u = u + alpha * d
+        r1 = r0 - alpha * v
 
         z1 = precondition(r1)
         beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
@@ -122,7 +129,7 @@ def mpcg_bbmm(
         # r0 = r1
         # z0 = z1
 
-        alpha_tridiag = jnp.diag(alpha)[:n_tridiag]
+        alpha_tridiag = alpha[:n_tridiag]
         beta_tridiag = jnp.diag(beta)[:n_tridiag]
         return d, r1, z1, u, alpha_tridiag, beta_tridiag
 
