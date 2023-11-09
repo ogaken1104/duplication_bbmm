@@ -14,16 +14,17 @@
 ## Todo
 ### must
 - ~~develop a test code~~
-- make mmm_A function
+- ~~make mmm_A function~~
     - ~~for K~~
     - ~~for $\frac{d\hat{K}_{XX}}{d\theta}$~~←computation is not efficient at this point.
     - ~~analyze the time complexity~~
-- modify mpcg algorithm to receive mmm function and check if we can solve
+- ~~modify mpcg algorithm to receive mmm function and check if we can solve~~
   - linear_cg.py and pivoted_cholesky.py
     - for pivoted cholesky, implementing linear_operator class may be needed
       - can obtain each row, _diagonal, shape, __getitem__, etc.
 - apply optimization stopping for alhpa, beta to obtain better t_mat (cause of low accuracy of log determinat)
-    - ask john for sample code
+    - has_convergedに基づいてalpha, betaをzeroでmaskする
+      -  さらにそのmaskに基づいてalpha, betaで割り算をするときの計算を変える
 - check if trace term is really calculated collectly
 ### should
 - trace termの計算が本当に合っているかわからない

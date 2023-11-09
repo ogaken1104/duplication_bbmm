@@ -22,6 +22,9 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         return self.sec1[-1], self.sec2[-1]
 
     def _diagonal(self) -> jnp.array:
+        """
+        not efficient because we use lax.scan for each component. we cannot use broadcasting of numpy because each kerenl functions in Kss is "vmapped".
+        """
         res = jnp.zeros(self.sec1[-1])
         for k in range(len(self.sec1[:-1])):
             r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
