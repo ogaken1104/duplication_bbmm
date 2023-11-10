@@ -147,12 +147,12 @@ def calc_three_terms(
 
     zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
     # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
-    zs = jax.random.multivariate_normal(
-        jax.random.PRNGKey(0),
-        jnp.zeros(len(delta_y_train)),
-        precond_lt,
-        shape=(n_tridiag,),
-    ).T
+    # zs = jax.random.multivariate_normal(
+    #     jax.random.PRNGKey(0),
+    #     jnp.zeros(len(delta_y_train)),
+    #     precond_lt,
+    #     shape=(n_tridiag,),
+    # ).T
     # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
     rhs = jnp.concatenate([zs, delta_y_train.reshape(-1, 1)], axis=1)
     time_end_precondition = time.time()
@@ -193,8 +193,12 @@ def calc_three_terms(
     I = jnp.eye(len(delta_y_train))
     Kinv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
     for dK in dKdtheta:
-        # trace = calc_trace.calc_trace(Kinvy, dK, zs, n_tridiag=n_tridiag)
-        trace = calc_trace.calc_trace(Kinvy, dK, precondition(zs), n_tridiag=n_tridiag)
+        if precondition:
+            trace = calc_trace.calc_trace(
+                Kinvy, dK, precondition(zs), n_tridiag=n_tridiag
+            )
+        else:
+            trace = calc_trace.calc_trace(Kinvy, dK, zs, n_tridiag=n_tridiag)
 
         trace_linalg = jnp.sum(jnp.diag(jnp.matmul(Kinv, dK)))
 

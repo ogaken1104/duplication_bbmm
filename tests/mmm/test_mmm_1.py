@@ -1,4 +1,4 @@
-from bbmm.utils.test_mmm import calc_K_x_right_matrix
+from tests.mmm.test_mmm import calc_K_x_right_matrix
 
 tol_rel_error = 1e-08
 tol_abs_error = 1e-08

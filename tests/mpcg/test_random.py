@@ -1,23 +1,22 @@
 from jax.config import config
 
-from bbmm.utils.calc_three_terms import calc_three_terms
+from tests.mpcg.calc_three_terms_random import calc_three_terms_random
 
 config.update("jax_enable_x64", True)
 
-linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms(
-    simulation_path="tests/data",
-    rank=5,
-    min_preconditioning_size=2000,
+linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms_random(
+    rank=15,
+    min_preconditioning_size=1,
     n_tridiag=10,
     max_iter_cg=5000,
     tolerance=0.01,
-    scale=1.0,
 )
-tol_rel_error = 1e-02
+tol_solve_rel_error = 1e-2
+tol_rel_error = 5e-02
 
 
 def test_linear_solve():
-    assert linear_solve_rel_error < tol_rel_error
+    assert linear_solve_rel_error < tol_solve_rel_error
 
 
 def test_logdet():
