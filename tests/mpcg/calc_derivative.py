@@ -53,7 +53,7 @@ def rel_error(true, pred):
     return rel_error
 
 
-def calc_three_terms(
+def calc_derivative(
     simulation_path: str = "tests/data",
     rank: int = 5,
     min_preconditioning_size: int = 2000,
@@ -141,69 +141,39 @@ def calc_three_terms(
 
     ## calc linear solve
     time_start_linear_solve = time.time()
-    precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
-        K, rank=rank, min_preconditioning_size=min_preconditioning_size
-    )
 
-    zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
-    # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
-    zs = jax.random.multivariate_normal(
-        jax.random.PRNGKey(0),
-        jnp.zeros(len(delta_y_train)),
-        precond_lt,
-        shape=(n_tridiag,),
-    ).T
-    # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
-    rhs = jnp.concatenate([zs, delta_y_train.reshape(-1, 1)], axis=1)
-    time_end_precondition = time.time()
-    Kinvy, j, t_mat = cg.mpcg_bbmm(
-        K,
-        rhs,
-        precondition=precondition,
-        print_process=False,
-        tolerance=tolerance,
-        max_iter_cg=max_iter_cg,
-        n_tridiag=n_tridiag,
-        n_tridiag_iter=n_tridiag_iter,
-    )
+    def Kinvy_given_init(init):
+        K = gp_model.trainingK_all(init, r_train)
+        K = gp_model.add_eps_to_sigma(K, params_model["epsilon"], noise_parameter=None)
+        precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
+            K, rank=rank, min_preconditioning_size=min_preconditioning_size
+        )
+
+        # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
+        zs = jax.random.multivariate_normal(
+            jax.random.PRNGKey(0),
+            jnp.zeros(len(delta_y_train)),
+            precond_lt,
+            shape=(n_tridiag,),
+        ).T
+        rhs = jnp.concatenate([zs, delta_y_train.reshape(-1, 1)], axis=1)
+        Kinvy, j, t_mat = cg.mpcg_bbmm(
+            K,
+            rhs,
+            precondition=precondition,
+            print_process=False,
+            tolerance=tolerance,
+            max_iter_cg=max_iter_cg,
+            n_tridiag=n_tridiag,
+            n_tridiag_iter=n_tridiag_iter,
+        )
+        return Kinvy, t_mat
+
+    dfunc = jax.jacfwd(Kinvy_given_init)
+    grad_solve, grad_t_mat = dfunc(init)
+
     time_end_mpcg = time.time()
     print(f"mpcg time: {time_end_mpcg - time_start_linear_solve:.3f}")
-    print(f"prec time: {time_end_precondition - time_start_linear_solve:.3f}")
-    print(f"cg   time: {time_end_mpcg - time_end_precondition:.3f}")
-    print(f"cg   iter: {j}\n")
-    L = jnp.linalg.cholesky(K)
-    v = jnp.linalg.solve(L, delta_y_train)
-    Kinvy_linalg = jnp.linalg.solve(L.T, v)
-    # linear_solve_rel_error = jnp.mean((Kinvy[:, -1] - Kinvy_linalg) / Kinvy_linalg)
-    linear_solve_rel_error = jnp.mean(rel_error(Kinvy_linalg, Kinvy[:, -1]))
+    # print(f"cg   iter: {j}\n")
 
-    ## calc by logdet
-    logdet = calc_logdet.calc_logdet(K.shape, t_mat, precond_logdet_cache)
-
-    def calc_logdet_linalg(K):
-        L = jnp.linalg.cholesky(K)
-        return jnp.sum(jnp.log(jnp.diag(L))) * 2
-
-    logdet_linalg = calc_logdet_linalg(K)
-
-    logdet_rel_error = abs((logdet - logdet_linalg) / logdet_linalg)
-
-    ## calc trace terms
-    trace_rel_error_list = []
-    I = jnp.eye(len(delta_y_train))
-    Kinv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
-    for dK in dKdtheta:
-        # trace = calc_trace.calc_trace(Kinvy, dK, zs, n_tridiag=n_tridiag)
-        trace = calc_trace.calc_trace(Kinvy, dK, precondition(zs), n_tridiag=n_tridiag)
-
-        trace_linalg = jnp.sum(jnp.diag(jnp.matmul(Kinv, dK)))
-
-        trace_rel_error_list.append(abs((trace - trace_linalg) / trace_linalg))
-
-        print(f"mean of dK: {jnp.mean(dK):.3e}")
-    print(f"trace_rel_error_list: {np.array(trace_rel_error_list)}")
-    # print(f"trace: {np.array(trace)}")
-    # print(f"trace_linalg: {np.array(trace_linalg)}")
-    trace_rel_error = np.mean(np.array(trace_rel_error_list))
-
-    return linear_solve_rel_error, logdet_rel_error, trace_rel_error
+    return grad_solve, grad_t_mat

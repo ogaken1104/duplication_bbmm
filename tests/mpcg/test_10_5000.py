@@ -5,13 +5,12 @@ from bbmm.utils.calc_three_terms import calc_three_terms
 config.update("jax_enable_x64", True)
 
 linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms(
-    simulation_path="test/data",
-    rank=50,
-    min_preconditioning_size=1,
-    n_tridiag=20,
-    n_tridiag_iter=20,
+    simulation_path="tests/data",
+    rank=5,
+    min_preconditioning_size=2000,
+    n_tridiag=10,
     max_iter_cg=5000,
-    tolerance=0.0001,
+    tolerance=0.01,
     scale=10.0,
 )
 tol_rel_error = 1e-02

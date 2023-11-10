@@ -3,7 +3,7 @@
 ## Summary of use case
 - term needed to calculate
     - loss: $\hat{K}_{XX}^{-1}\boldsymbol{y}, \mathrm{log}|\hat{K}_{XX}|, $
-    - gradient of loss: $\hat{K}_{XX}^{-1}\boldsymbol{y}, \mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$
+    - gradient of loss: $\hat{K}_{XX}^{-1}\boldsymbol{y}, \mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$←in gpytorch, this is comupted using "autograd" but in jax implementation we may should use analytical derivative (because of the different autograd scheme)
     - prediction of mean:  $\hat{K}_{XX}^{-1}\boldsymbol{y}$
     - prediction of std: $\hat{K}_{XX}^{-1}\boldsymbol{k}_{X\boldsymbol{x}^*}$
 - variation of calculation method
@@ -22,22 +22,23 @@
   - linear_cg.py and pivoted_cholesky.py
     - for pivoted cholesky, implementing linear_operator class may be needed
       - can obtain each row, _diagonal, shape, __getitem__, etc.
-- apply optimization stopping for alhpa, beta to obtain better t_mat (cause of low accuracy of log determinat)
+- ~~apply optimization stopping for alhpa, beta to obtain better $\mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$~~
     - ~~has_convergedに基づいてalphaをzeroでmaskする(lax.select)~~
     - epsに基づいて,alpha, betaのzero divisionを避ける(lax.cond for each terms →lax .select)
-      - alphaについて避けてみたが、あまり変わらないのが現状、むしろlinear_solveに失敗するものも現れた
-      - betaについても実装したが、同様にあまり変わらない、若干小さくなるくらい
-        - iterを変えて試してみる
-        - log determinantは単純にコーディングのミスだった
-   -  "has_converged"を計算することができるか確かめる、まずはnoprecondの場合から
-- check if trace term is really calculated collectly
-### should
-- trace termの計算が本当に合っているかわからない
-    - 検証する必要あり
-    - ほぼ収束しているのに必要以上に計算を進めているから...？
-    - probe_vectorはzero_mean_mvn_samplesから生成している
+      - implemented, but **almost no change**
+- check if trace term is really calculated correctly
+   - in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$
       - `probe_vectors = precond_lt.zero_mean_mvn_samples(num_random_probes)`
+      - Is implementing this gives us better result?
+- calc whole log marginal likelihood and its derivative to check
+- implement inference by our BBMM
+  - simple sin curve
+  - stokes eq in 2D
+  - larger number of points (~10^5~7)
 
+### should
+
+    
 
 ## test
 - what to test
@@ -52,4 +53,6 @@
 
 
 ## memo
-we can make mmm firster by using "lax.switch" and "lax.cond" instead of "if" statement.
+- we can make mmm firster by using "lax.switch" and "lax.cond" instead of "if" statement.
+- trace termは実際には計算されず、自動微分が用いられている、、！→trace termを計算する必要はない
+  - [参考](ttps://github.com/cornellius-gp/gpytorch/discussions/1949)

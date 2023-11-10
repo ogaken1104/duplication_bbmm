@@ -13,7 +13,7 @@ config.update("jax_enable_x64", True)
 
 
 def test_lazy_evaluated_kernel_matrix(
-    simulation_path: str = "test/data",
+    simulation_path: str = "tests/data",
     scale: float = 1.0,
 ):
     params_main, params_prepare, lbls = load_params(f"{simulation_path}/data_input")
