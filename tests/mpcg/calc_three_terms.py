@@ -1,4 +1,5 @@
 import importlib
+import os
 import time
 
 import cmocean as cmo
@@ -24,6 +25,10 @@ import bbmm.utils.conjugate_gradient as cg
 import bbmm.utils.preconditioner as precond
 
 config.update("jax_enable_x64", True)
+
+print("\n################################")
+print(os.path.basename(__file__))
+print("################################")
 
 
 def is_positive_definite(matrix):
@@ -61,7 +66,7 @@ def calc_three_terms(
     max_iter_cg: int = 1000,
     tolerance: float = 0.01,
     scale: float = 1.0,
-    n_tridiag_iter: int = 20,
+    max_tridiag_iter: int = 20,
 ):
     params_main, params_prepare, lbls = load_params(f"{simulation_path}/data_input")
     params_model = params_main["model"]
@@ -144,8 +149,11 @@ def calc_three_terms(
     precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
         K, rank=rank, min_preconditioning_size=min_preconditioning_size
     )
+    if precondition:
+        cond_num = jnp.linalg.cond(precondition(K))
+        print(f"condition number of P^{-1}K: {cond_num:.3e}")
 
-    zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
+    # zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
     # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
     # zs = jax.random.multivariate_normal(
     #     jax.random.PRNGKey(0),
@@ -154,6 +162,12 @@ def calc_three_terms(
     #     shape=(n_tridiag,),
     # ).T
     # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
+    if precondition:
+        zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
+    else:
+        zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
+    # zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
+    # zs = zs / zs_norms
     rhs = jnp.concatenate([zs, delta_y_train.reshape(-1, 1)], axis=1)
     time_end_precondition = time.time()
     Kinvy, j, t_mat = cg.mpcg_bbmm(
@@ -164,7 +178,7 @@ def calc_three_terms(
         tolerance=tolerance,
         max_iter_cg=max_iter_cg,
         n_tridiag=n_tridiag,
-        n_tridiag_iter=n_tridiag_iter,
+        max_tridiag_iter=max_tridiag_iter,
     )
     time_end_mpcg = time.time()
     print(f"mpcg time: {time_end_mpcg - time_start_linear_solve:.3f}")
@@ -204,10 +218,14 @@ def calc_three_terms(
 
         trace_rel_error_list.append(abs((trace - trace_linalg) / trace_linalg))
 
-        print(f"mean of dK: {jnp.mean(dK):.3e}")
+        # print(f"mean of dK: {jnp.mean(dK):.3e}")
     print(f"trace_rel_error_list: {np.array(trace_rel_error_list)}")
     # print(f"trace: {np.array(trace)}")
     # print(f"trace_linalg: {np.array(trace_linalg)}")
     trace_rel_error = np.mean(np.array(trace_rel_error_list))
+
+    print(f"linear_solve_rel_error: {linear_solve_rel_error:.3e}")
+    print(f"logdet_rel_error: {logdet_rel_error:.3e}")
+    print(f"trace_rel_error: {trace_rel_error:.3e}")
 
     return linear_solve_rel_error, logdet_rel_error, trace_rel_error

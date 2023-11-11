@@ -9,9 +9,9 @@ linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms(
     rank=15,
     min_preconditioning_size=1,
     n_tridiag=20,
-    n_tridiag_iter=20,
+    max_tridiag_iter=40,
     max_iter_cg=5000,
-    tolerance=0.01,
+    tolerance=0.0001,
     scale=10.0,
 )
 tol_solve_rel_error = 1e-2

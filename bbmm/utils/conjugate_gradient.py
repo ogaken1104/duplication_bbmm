@@ -41,7 +41,7 @@ def mpcg_bbmm(
     print_process: bool = False,
     eps: float = 1e-10,
     n_tridiag: int = 10,
-    n_tridiag_iter: int = 20,
+    max_tridiag_iter: int = 20,
     return_iter_cg: bool = False,
     stop_updating_after: float = 1e-10,
 ) -> Tuple[jnp.ndarray, ...]:
@@ -75,7 +75,7 @@ def mpcg_bbmm(
 
     if n_tridiag:
         num_rows = rhs.shape[-2]
-        n_tridiag_iter = min(n_tridiag_iter, num_rows)
+        n_tridiag_iter = min(max_tridiag_iter, num_rows)
     ### initial setting
     u = jnp.zeros_like(rhs)  ## current solution
 

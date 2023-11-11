@@ -61,7 +61,7 @@ def calc_derivative(
     max_iter_cg: int = 1000,
     tolerance: float = 0.01,
     scale: float = 1.0,
-    n_tridiag_iter: int = 20,
+    max_tridiag_iter: int = 20,
 ):
     params_main, params_prepare, lbls = load_params(f"{simulation_path}/data_input")
     params_model = params_main["model"]
@@ -165,7 +165,7 @@ def calc_derivative(
             tolerance=tolerance,
             max_iter_cg=max_iter_cg,
             n_tridiag=n_tridiag,
-            n_tridiag_iter=n_tridiag_iter,
+            max_tridiag_iter=max_tridiag_iter,
         )
         return Kinvy, t_mat
 

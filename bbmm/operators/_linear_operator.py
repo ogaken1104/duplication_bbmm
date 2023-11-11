@@ -3,8 +3,6 @@ from typing import Iterable, Union
 import jax
 import jax.numpy as jnp
 
-from bbmm.operators.root_linear_operator import RootLinearOp
-
 IndexType = Union[type(Ellipsis), slice, Iterable[int], int]
 
 
@@ -47,6 +45,8 @@ class LinearOp:
         )
 
     def root_decomposition(self):
+        from bbmm.operators.root_linear_operator import RootLinearOp
+
         root = self._root_decomposition()
         return RootLinearOp(root)
 

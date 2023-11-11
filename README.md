@@ -28,16 +28,20 @@
       - implemented, but **almost no change**
 - check if logdet term is calculated correctly
   - ~~when precondition, error becomes large→is precond_log_det is accurate?~~
-    - probably right
     - **why result changes when two ways of calc logdet in torch? this may be the key**
       - this will probably because the difference of random seed to generate random matrix
       - when giving the same t_mat, result was almost consistent, so it's ok
-  - how to generate zs efficiently given preconditioner $P$
+    - N<=800ではcholeskyを使って解く設定になっていたことが原因....！つまらないところで止まってしまっていた....！
+  - ~~how to generate zs efficiently given preconditioner $P$~~
     - _pivoted_cholesky.py中の`self._precond_lt = PsdSumLinearOperator(RootLinearOperator(self._piv_chol_self), self._diag_tensor)`を実装でき、またlinear_operator classにzero_mean_mvn_samplesを実装できればよい
+  - **preconditionerのrankを増やしても誤差が小さくならないのはかなり不可解**
+    - これはおそらく，preconditionerを増やすことにより収束回数が小さくなり，その結果last_tridiag_iterが非常に小さくなっていることが原因であろう→max_tridiag_iterをある程度大きな値に設定しておくことが推奨される
+      
 - (check if trace term is really calculated correctly)
-   - in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$
+   - ~~in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$~~
       - `probe_vectors = precond_lt.zero_mean_mvn_samples(num_random_probes)`
       - Is implementing this gives us better result?
+        - seems better
 - calc whole log marginal likelihood and its derivative to check
 - implement inference by our BBMM
   - simple sin curve

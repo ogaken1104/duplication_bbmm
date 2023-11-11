@@ -7,6 +7,9 @@ import numpy as np
 from jax import jit, lax, vmap
 
 from bbmm.functions.pivoted_cholesky_numpy import pivoted_cholesky_numpy
+from bbmm.operators.diag_linear_operator import DiagLinearOp
+from bbmm.operators.psd_sum_linear_operator import PsdSumLinearOp
+from bbmm.operators.root_linear_operator import RootLinearOp
 
 
 def setup_preconditioner(
@@ -41,7 +44,10 @@ def setup_preconditioner(
     logdet = jnp.sum(jnp.log(jnp.abs(jnp.diagonal(r_cache, axis1=0, axis2=1)))) * 2
     logdet = logdet + (n - k) * jnp.log(noise)
     _precond_logdet_cache = logdet
-    _precond_lt = jnp.matmul(piv_chol_self, piv_chol_self.T) + jnp.eye(n) * noise
+    # _precond_lt = jnp.matmul(piv_chol_self, piv_chol_self.T) + jnp.eye(n) * noise
+    _precond_lt = PsdSumLinearOp(
+        RootLinearOp(piv_chol_self), DiagLinearOp(jnp.full(n, noise))
+    )
 
     def precondition(residual: jnp.array):
         qqt = jnp.matmul(q_cache, jnp.matmul(q_cache.T, residual))

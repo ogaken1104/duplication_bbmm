@@ -1,4 +1,5 @@
 import importlib
+import os
 import time
 
 import cmocean as cmo
@@ -24,6 +25,9 @@ import bbmm.utils.conjugate_gradient as cg
 import bbmm.utils.preconditioner as precond
 
 config.update("jax_enable_x64", True)
+print("\n################################")
+print(os.path.basename(__file__))
+print("################################")
 
 
 def is_positive_definite(matrix):
@@ -76,7 +80,7 @@ def calc_three_terms_random(
     n_tridiag: int = 10,
     max_iter_cg: int = 1000,
     tolerance: float = 0.01,
-    n_tridiag_iter: int = 20,
+    max_tridiag_iter: int = 20,
 ):
     N = 100
 
@@ -97,17 +101,27 @@ def calc_three_terms_random(
     precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
         K, rank=rank, min_preconditioning_size=min_preconditioning_size
     )
+    if precondition:
+        cond_num = jnp.linalg.cond(precondition(K))
+        print(f"condition number of P^{-1}K: {cond_num:.3e}")
+
     time_end_precondition = time.time()
     y = jax.random.normal(jax.random.PRNGKey(0), (N, 1))
+    # if precondition:
+    #     zs = jax.random.multivariate_normal(
+    #         jax.random.PRNGKey(0),
+    #         jnp.zeros(len(y)),
+    #         precond_lt,
+    #         shape=(n_tridiag,),
+    #     ).T
+    # else:
+    #     zs = jax.random.normal(jax.random.PRNGKey(0), (N, n_tridiag))
     if precondition:
-        zs = jax.random.multivariate_normal(
-            jax.random.PRNGKey(0),
-            jnp.zeros(len(y)),
-            precond_lt,
-            shape=(n_tridiag,),
-        ).T
+        zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
     else:
         zs = jax.random.normal(jax.random.PRNGKey(0), (N, n_tridiag))
+    # zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
+    # zs = zs / zs_norms
     # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
     # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
     rhs = jnp.concatenate([zs, y], axis=1)
@@ -120,7 +134,7 @@ def calc_three_terms_random(
         tolerance=tolerance,
         max_iter_cg=max_iter_cg,
         n_tridiag=n_tridiag,
-        n_tridiag_iter=n_tridiag_iter,
+        max_tridiag_iter=max_tridiag_iter,
     )
     time_end_mpcg = time.time()
     print(
