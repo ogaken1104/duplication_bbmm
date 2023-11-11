@@ -66,7 +66,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
 
         return calc_K_row
 
-    def _matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
+    def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         ## 解のarrayを確保
         res = jnp.zeros_like(rhs)
         for k in range(len(self.sec1[:-1])):

@@ -27,7 +27,7 @@
     - epsに基づいて,alpha, betaのzero divisionを避ける(lax.cond for each terms →lax .select)
       - implemented, but **almost no change**
 - check if logdet term is calculated correctly
-  - when precondition, error becomes large→is precond_log_det is accurate?
+  - ~~when precondition, error becomes large→is precond_log_det is accurate?~~
     - probably right
     - **why result changes when two ways of calc logdet in torch? this may be the key**
       - this will probably because the difference of random seed to generate random matrix
@@ -45,7 +45,9 @@
   - larger number of points (~10^5~7)
 
 ### should
-
+- block covariance matrixに適したconditioningの方法はあるか？
+    - スケールして、かつfの値を調整せずに、得たuを調整すればcondition numberを低く抑えられそう
+    - Johnに調査を頼むことも考える
     
 
 ## test
@@ -58,6 +60,13 @@
 ### linear_operator
 - methods:
   - matmul, _diagonal, shape
+### precond_lt
+- methods:
+  - zero_mean_mvn_samples
+### diag_linear_operator, rootlinearoperator
+- methods:
+  - zero_mean_mvn_samples
+
 
 
 ## memo

@@ -85,7 +85,7 @@ def test_lazy_evaluated_kernel_matrix(
         gp_model.sec_tr[-1],
     )
 
-    K_x_right_matrix = lazy_evaluated_kernel_matrix._matmul(rhs=right_matrix)
+    K_x_right_matrix = lazy_evaluated_kernel_matrix.matmul(rhs=right_matrix)
 
     K = gp_model.trainingK_all(init, r_train)
     K = gp_model.add_eps_to_sigma(K, params_model["epsilon"], noise_parameter=None)

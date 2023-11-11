@@ -1,7 +1,7 @@
-## _linear_operator.pyからLinearOperatorクラスをimportしてDenseLInearOPeratorクラスをうtくる
-# Path: duplication_of_bbmm/operators/dese_linear_operator.py
-# Compare this snippet from duplication_of_bbmm/operators/dese_linear_operator.py:
+from typing import Union
+
 import jax.numpy as jnp
+import numpy as np
 
 from bbmm.operators._linear_operator import LinearOp
 
@@ -17,8 +17,27 @@ class DenseLinearOp(LinearOp):
     def _diagonal(self) -> jnp.array:
         return jnp.diagonal(self.array, axis1=-2, axis2=-1)
 
-    def _matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
+    def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         return jnp.matmul(self.array, rhs)
 
     def __getitem__(self, index) -> jnp.ndarray:
         return self.array[index]
+
+
+def to_linear_operator(obj: Union[jnp.array, LinearOp]) -> LinearOp:
+    """
+    A function which ensures that `obj` is a LinearOperator.
+    - If `obj` is a LinearOperator, this function does nothing.
+    - If `obj` is a (normal) jnp.array, this function wraps it with a `DenseLinearOperator`.
+    """
+
+    if isinstance(obj, jnp.ndarray) or isinstance(obj, np.ndarray):
+        return DenseLinearOp(obj)
+    elif isinstance(obj, LinearOp):
+        return obj
+    else:
+        raise TypeError(
+            "object of class {} cannot be made into a LinearOperator".format(
+                obj.__class__.__name__
+            )
+        )

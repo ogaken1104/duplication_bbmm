@@ -9,7 +9,7 @@ def test_dense_linear_operator():
     assert dense_linear_operator.shape == (2, 2)
     assert jnp.all(dense_linear_operator._diagonal() == jnp.array([1, 4]))
     assert jnp.all(
-        dense_linear_operator._matmul(jnp.array([1, 2])) == jnp.array([5, 11])
+        dense_linear_operator.matmul(jnp.array([1, 2])) == jnp.array([5, 11])
     )
     assert jnp.all(dense_linear_operator[0] == jnp.array([1, 2]))
     assert jnp.all(dense_linear_operator[0, 1] == jnp.array(2))

@@ -1,6 +1,9 @@
 from typing import Iterable, Union
 
+import jax
 import jax.numpy as jnp
+
+from bbmm.operators.root_linear_operator import RootLinearOp
 
 IndexType = Union[type(Ellipsis), slice, Iterable[int], int]
 
@@ -13,9 +16,9 @@ class LinearOp:
     def __init__(self) -> None:
         pass
 
-    def _matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
+    def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         raise NotImplementedError(
-            "The class {} requires a _matmul function!".format(self.__class__.__name__)
+            "The class {} requires a matmul function!".format(self.__class__.__name__)
         )
 
     def _diagonal(self) -> jnp.array:
@@ -42,3 +45,18 @@ class LinearOp:
                 self.__class__.__name__
             )
         )
+
+    def root_decomposition(self):
+        root = self._root_decomposition()
+        return RootLinearOp(root)
+
+    def zero_mean_mvn_samples(self, num_samples: int, seed: int = 0) -> jnp.ndarray:
+        covar_root = self.root_decomposition().root
+
+        base_samples = jax.random.normal(
+            key=jax.random.PRNGKey(seed), shape=(covar_root.shape[-1], num_samples)
+        )
+
+        samples = covar_root.matmul(base_samples)
+
+        return samples
