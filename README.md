@@ -32,10 +32,12 @@
       - this will probably because the difference of random seed to generate random matrix
       - when giving the same t_mat, result was almost consistent, so it's ok
     - N<=800ではcholeskyを使って解く設定になっていたことが原因....！つまらないところで止まってしまっていた....！
+    - probe_vectorはnormalizeしなくても，linear_solveとlogdetはほとんど変わらず，trace_termは良くなった→一旦なし
   - ~~how to generate zs efficiently given preconditioner $P$~~
     - _pivoted_cholesky.py中の`self._precond_lt = PsdSumLinearOperator(RootLinearOperator(self._piv_chol_self), self._diag_tensor)`を実装でき、またlinear_operator classにzero_mean_mvn_samplesを実装できればよい
-  - **preconditionerのrankを増やしても誤差が小さくならないのはかなり不可解**
-    - これはおそらく，preconditionerを増やすことにより収束回数が小さくなり，その結果last_tridiag_iterが非常に小さくなっていることが原因であろう→max_tridiag_iterをある程度大きな値に設定しておくことが推奨される
+- **preconditionerのrankを増やすとlogdetの誤差が大きくなることは解決しなければならない(?)**
+  - notebookでは起こったが，スクリプトをtestした限りは問題なかった？
+  - これはおそらく，preconditionerを増やすことにより収束回数が小さくなり，その結果last_tridiag_iterが非常に小さくなっていることが原因であろう→max_tridiag_iterをある程度大きな値に設定しておくことが推奨される
       
 - (check if trace term is really calculated correctly)
    - ~~in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$~~
@@ -77,3 +79,22 @@
 - we can make mmm firster by using "lax.switch" and "lax.cond" instead of "if" statement.
 - trace termは実際には計算されず、自動微分が用いられている、、！→trace termを計算する必要はない
   - [参考](ttps://github.com/cornellius-gp/gpytorch/discussions/1949)
+- maybe high accuracy for linear solve and logdet is not needed (optimization seems succesful at even ~20% error)
+
+
+### result of chekcing the component of loss
+|problem setup|cond. number|linear_solve|log determinant|(trace term)|comment|
+|--|--|--|--|--|--|
+|max relative error|--|1%|5%|5%||
+|random|4.8|.|.|.||
+|sin1d (large noise: 1e-03)|1.9e5|.|.|.||
+|sin1d (small noise: 1e-06)|2.0e8|.|F|.|precondition didn't work probably because digonal is alredy maximum|
+|sin1d x5 (small noise: 1e-06)|1e6|.|.|F||
+
+### result of optimizing trianing and prediction
+|problem setup|cond. #|$\theta$ bbmm|$\theta$ default|$\theta$ gpytorch|prediction accuracy|
+|--|--|--|--|--|--|
+|sin x100(large eps)|7e2|0.14, 11.5|0.15, 10.8|0.19, 2.7|OK|
+|sin (large eps), 1000 points|2e5|0.29, 0.14|0.32, 0.17||bbmm: 2e-3, default: 6e-5|
+|sin (small eps), 10 points|2e3|0.29, 0.14|0.32, 0.17||bbmm: 2e-3, default: 6e-5|
+|sin x100(small eps)|1e6|0.39, 2.39|0.13, 15.1||not perfect|

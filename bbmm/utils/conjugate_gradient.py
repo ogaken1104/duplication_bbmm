@@ -181,9 +181,15 @@ def mpcg_bbmm(
         if n_tridiag and j < n_tridiag_iter and update_tridiag:
             ### TODO implement setting coverged alpha_tridiag 0.
             alpha_tridiag_is_zero = alpha_tridiag == 0
-            alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)
+            # alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)
+            alpha_tridiag = lax.select(
+                alpha_tridiag_is_zero, jnp.ones(len(alpha_tridiag)), alpha_tridiag
+            )
             alpha_reciprocal = 1.0 / alpha_tridiag
-            alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)
+            # alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)
+            alpha_tridiag = lax.select(
+                alpha_tridiag_is_zero, jnp.zeros(len(alpha_tridiag)), alpha_tridiag
+            )
 
             # print(alpha_reciprocal)
             if j == 0:
@@ -196,8 +202,14 @@ def mpcg_bbmm(
                     jnp.sqrt(prev_beta) * prev_alpha_reciprocal
                 )
                 t_mat = t_mat.at[j - 1, j].set(t_mat[j, j - 1])
-                if jnp.max(t_mat[j - 1, j]) < 1e-06:
-                    update_tridiag = False
+                # if jnp.max(t_mat[j - 1, j]) < 1e-06:
+                #     update_tridiag = False
+                update_tridiag = lax.cond(
+                    jnp.max(t_mat[j - 1, j]) < 1e-06,
+                    lambda x: False,
+                    lambda x: update_tridiag,
+                    operand=None,
+                )  # lax.cond and lax.select, which is faster?
             last_tridiag_iter = j
 
             prev_alpha_reciprocal = alpha_reciprocal.copy()
