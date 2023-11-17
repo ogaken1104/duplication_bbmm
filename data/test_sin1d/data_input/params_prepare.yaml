@@ -1,0 +1,38 @@
+generate_test:
+  test_num: 300
+generate_training:
+  ly_num: 10
+  y_loc: both
+kernel_arg:
+- yy
+num_points:
+  test:
+    sum: 300
+    y: 300
+  training:
+    ly: 10
+    sum: 12
+    y: 2
+plot:
+  error_limit:
+  - 0.0001
+  - 0.1
+  std_limit:
+  - 0
+  - 0.002
+  val_limits:
+  - - -1.0
+    - 1.0
+  x_for_ux: 0.5
+setting:
+  use_pbc_points: false
+vnames:
+  analysis:
+  - y
+  infer:
+  - y
+  test:
+  - y
+  train:
+  - y
+  - ly

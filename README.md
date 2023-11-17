@@ -80,6 +80,8 @@
 - trace termは実際には計算されず、自動微分が用いられている、、！→trace termを計算する必要はない
   - [参考](ttps://github.com/cornellius-gp/gpytorch/discussions/1949)
 - maybe high accuracy for linear solve and logdet is not needed (optimization seems succesful at even ~20% error)
+- 発散することがあるのは，n_tridiagや他のloopを大きくしすぎたときなのか？それ以外では発散しづらいのか？これは検証する必要がある
+- gpytorchのlazy_evaluated_kernel_tensor.pyを継承し，新たにblok-like covariance matrixを扱えるようにすることも選択肢→やられていないということは難しい
 
 
 ### result of chekcing the component of loss
@@ -96,5 +98,5 @@
 |--|--|--|--|--|--|
 |sin x100(large eps)|7e2|0.14, 11.5|0.15, 10.8|0.19, 2.7|OK|
 |sin (large eps), 1000 points|2e5|0.29, 0.14|0.32, 0.17||bbmm: 2e-3, default: 6e-5|
-|sin (small eps), 10 points|2e3|0.29, 0.14|0.32, 0.17||bbmm: 2e-3, default: 6e-5|
+|sin (small eps), 10 points|2e3|0.75, 2.1|0.73, 1.9||bbmm: 5e-5, default: 1e-4|
 |sin x100(small eps)|1e6|0.39, 2.39|0.13, 15.1||not perfect|
