@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit, lax, vmap
 
+from bbmm.functions.pivoted_cholesky_jax import pivoted_cholesky_jax
 from bbmm.functions.pivoted_cholesky_numpy import pivoted_cholesky_numpy
 from bbmm.operators.diag_linear_operator import DiagLinearOp
 from bbmm.operators.psd_sum_linear_operator import PsdSumLinearOp
@@ -27,9 +28,9 @@ def setup_preconditioner(
     if len(matrix) < min_preconditioning_size:
         return None, None, None
     if rank is None:
-        piv_chol_self = pivoted_cholesky_numpy(matrix)
+        piv_chol_self = pivoted_cholesky_jax(matrix)
     else:
-        piv_chol_self = pivoted_cholesky_numpy(matrix, max_iter=rank)
+        piv_chol_self = pivoted_cholesky_jax(matrix, max_iter=rank)
     n, k = piv_chol_self.shape
     # print(f'n: {n} k: {k}')
     eye = jnp.eye(k)
