@@ -13,41 +13,15 @@
 
 ## Todo
 ### must
-- ~~develop a test code~~
-- ~~make mmm_A function~~
-    - ~~for K~~
-    - ~~for $\frac{d\hat{K}_{XX}}{d\theta}$~~←computation is not efficient at this point.
-    - ~~analyze the time complexity~~
-- ~~modify mpcg algorithm to receive mmm function and check if we can solve~~
-  - linear_cg.py and pivoted_cholesky.py
-    - for pivoted cholesky, implementing linear_operator class may be needed
-      - can obtain each row, _diagonal, shape, __getitem__, etc.
-- ~~apply optimization stopping for alhpa, beta to obtain better $\mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$~~
-    - ~~has_convergedに基づいてalphaをzeroでmaskする(lax.select)~~
-    - epsに基づいて,alpha, betaのzero divisionを避ける(lax.cond for each terms →lax .select)
-      - implemented, but **almost no change**
-- check if logdet term is calculated correctly
-  - ~~when precondition, error becomes large→is precond_log_det is accurate?~~
-    - **why result changes when two ways of calc logdet in torch? this may be the key**
-      - this will probably because the difference of random seed to generate random matrix
-      - when giving the same t_mat, result was almost consistent, so it's ok
-    - N<=800ではcholeskyを使って解く設定になっていたことが原因....！つまらないところで止まってしまっていた....！
-    - probe_vectorはnormalizeしなくても，linear_solveとlogdetはほとんど変わらず，trace_termは良くなった→一旦なし
-  - ~~how to generate zs efficiently given preconditioner $P$~~
-    - _pivoted_cholesky.py中の`self._precond_lt = PsdSumLinearOperator(RootLinearOperator(self._piv_chol_self), self._diag_tensor)`を実装でき、またlinear_operator classにzero_mean_mvn_samplesを実装できればよい
-- **preconditionerのrankを増やすとlogdetの誤差が大きくなることは解決しなければならない(?)**
-  - notebookでは起こったが，スクリプトをtestした限りは問題なかった？
-  - これはおそらく，preconditionerを増やすことにより収束回数が小さくなり，その結果last_tridiag_iterが非常に小さくなっていることが原因であろう→max_tridiag_iterをある程度大きな値に設定しておくことが推奨される
-      
-- (check if trace term is really calculated correctly)
-   - ~~in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$~~
-      - `probe_vectors = precond_lt.zero_mean_mvn_samples(num_random_probes)`
-      - Is implementing this gives us better result?
-        - seems better
-- calc whole log marginal likelihood and its derivative to check
+- ~~calc whole log marginal likelihood and its derivative to check~~
 - implement inference by our BBMM
   - simple sin curve
+    - ~~possible (if the condiiotn number is not too large ($\lt1e6$))~~
+    - try to use analytical derivative
+  - sin curve with its laplasian
+    - possible
   - stokes eq in 2D
+    - precondition is not still implemented
   - larger number of points (~10^5~7)
 
 ### should
@@ -100,3 +74,36 @@
 |sin (large eps), 1000 points|2e5|0.29, 0.14|0.32, 0.17||bbmm: 2e-3, default: 6e-5|
 |sin (small eps), 10 points|2e3|0.75, 2.1|0.73, 1.9||bbmm: 5e-5, default: 1e-4|
 |sin x100(small eps)|1e6|0.39, 2.39|0.13, 15.1||not perfect|
+
+## Log
+- ~~develop a test code~~
+- ~~make mmm_A function~~
+    - ~~for K~~
+    - ~~for $\frac{d\hat{K}_{XX}}{d\theta}$~~←computation is not efficient at this point.
+    - ~~analyze the time complexity~~
+- ~~modify mpcg algorithm to receive mmm function and check if we can solve~~
+  - linear_cg.py and pivoted_cholesky.py
+    - for pivoted cholesky, implementing linear_operator class may be needed
+      - can obtain each row, _diagonal, shape, __getitem__, etc.
+- ~~apply optimization stopping for alhpa, beta to obtain better $\mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$~~
+    - ~~has_convergedに基づいてalphaをzeroでmaskする(lax.select)~~
+    - epsに基づいて,alpha, betaのzero divisionを避ける(lax.cond for each terms →lax .select)
+      - implemented, but **almost no change**
+- check if logdet term is calculated correctly
+  - ~~when precondition, error becomes large→is precond_log_det is accurate?~~
+    - **why result changes when two ways of calc logdet in torch? this may be the key**
+      - this will probably because the difference of random seed to generate random matrix
+      - when giving the same t_mat, result was almost consistent, so it's ok
+    - N<=800ではcholeskyを使って解く設定になっていたことが原因....！つまらないところで止まってしまっていた....！
+    - probe_vectorはnormalizeしなくても，linear_solveとlogdetはほとんど変わらず，trace_termは良くなった→一旦なし
+  - ~~how to generate zs efficiently given preconditioner $P$~~
+    - _pivoted_cholesky.py中の`self._precond_lt = PsdSumLinearOperator(RootLinearOperator(self._piv_chol_self), self._diag_tensor)`を実装でき、またlinear_operator classにzero_mean_mvn_samplesを実装できればよい
+- **preconditionerのrankを増やすとlogdetの誤差が大きくなることは解決しなければならない(?)**
+  - notebookでは起こったが，スクリプトをtestした限りは問題なかった？
+  - これはおそらく，preconditionerを増やすことにより収束回数が小さくなり，その結果last_tridiag_iterが非常に小さくなっていることが原因であろう→max_tridiag_iterをある程度大きな値に設定しておくことが推奨される
+      
+- (check if trace term is really calculated correctly)
+   - ~~in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$~~
+      - `probe_vectors = precond_lt.zero_mean_mvn_samples(num_random_probes)`
+      - Is implementing this gives us better result?
+        - seems better
