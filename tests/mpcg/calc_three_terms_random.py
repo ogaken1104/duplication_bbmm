@@ -25,9 +25,6 @@ import bbmm.utils.conjugate_gradient as cg
 import bbmm.utils.preconditioner as precond
 
 config.update("jax_enable_x64", True)
-print("\n################################")
-print(os.path.basename(__file__))
-print("################################")
 
 
 def is_positive_definite(matrix):
@@ -103,7 +100,7 @@ def calc_three_terms_random(
     )
     if precondition:
         cond_num = jnp.linalg.cond(precondition(K))
-        print(f"condition number of P^{-1}K: {cond_num:.3e}")
+        print(f"condition number of P^{-1}K: {cond_num:.3e}\n")
 
     time_end_precondition = time.time()
     y = jax.random.normal(jax.random.PRNGKey(0), (N, 1))
@@ -172,12 +169,13 @@ def calc_three_terms_random(
         trace = calc_trace.calc_trace(Kinvy, dKdtheta, zs, n_tridiag=n_tridiag)
 
     trace_linalg = jnp.sum(jnp.diag(jnp.matmul(Kinv, dKdtheta)))
-    print(f"trace: {trace:.3e}")
-    print(f"trace_linalg: {trace_linalg:.3e}\n")
+    # print(f"trace: {trace:.3e}")
+    # print(f"trace_linalg: {trace_linalg:.3e}\n")
 
     trace_rel_error = abs((trace - trace_linalg) / trace_linalg)
 
     print(f"linear_solve_rel_error: {linear_solve_rel_error:.3e}")
     print(f"logdet_rel_error: {logdet_rel_error:.3e}")
     print(f"trace_rel_error: {trace_rel_error:.3e}")
+    print("\n\n")
     return linear_solve_rel_error, logdet_rel_error, trace_rel_error

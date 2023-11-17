@@ -89,6 +89,8 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             res, _ = lax.scan(calc_vmm, res, xs=(index_scan, r1s_k))
         return res
 
+    ## TODO do matrix-matix multiplicatoin blockwise (this will work for not so many points)
+
     def __getitem__(self, index) -> jnp.ndarray:
         """
         at this point, just returns designated row permutation.
