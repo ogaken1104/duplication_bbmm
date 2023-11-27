@@ -8,6 +8,7 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import stopro.GP.gp_sinusoidal_independent as gp_sinusoidal_independent
+import stopro.GP.gp_poiseuille_independent as gp_poiseuille_independent
 from jax import grad, jit, lax, vmap
 from jax.config import config
 from stopro.data_generator.sinusoidal import Sinusoidal
@@ -55,7 +56,7 @@ def rel_error(true, pred):
 
 
 def calc_three_terms(
-    simulation_path: str = "tests/data",
+    simulation_path: str = "tests/data/poiseuille_direct",
     rank: int = 5,
     min_preconditioning_size: int = 2000,
     n_tridiag: int = 10,
@@ -100,13 +101,8 @@ def calc_three_terms(
 
     # setup model
     Kernel = define_kernel(params_model)
-    gp_model = gp_sinusoidal_independent.GPSinusoidalWithoutPIndependent(
-        use_difp=params_setting["use_difp"],
-        use_difu=params_setting["use_difu"],
-        lbox=jnp.array([2.5 * scale, 0.0]),
-        infer_governing_eqs=params_prepare["generate_test"]["infer_governing_eqs"],
+    gp_model = gp_poiseuille_independent.GPPoiseuilleIndependent(
         Kernel=Kernel,
-        index_optimize_noise=params_model["index_optimize_noise"],
     )
     gp_model.set_constants(*args_predict)
 

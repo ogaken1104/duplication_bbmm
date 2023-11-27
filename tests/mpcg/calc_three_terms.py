@@ -55,7 +55,7 @@ def rel_error(true, pred):
 
 
 def calc_three_terms(
-    simulation_path: str = "tests/data",
+    simulation_path: str = "tests/data/sinusoidal_direct",
     rank: int = 5,
     min_preconditioning_size: int = 2000,
     n_tridiag: int = 10,

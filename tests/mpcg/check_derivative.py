@@ -7,7 +7,7 @@ config.update("jax_enable_x64", True)
 
 def check_derivative():
     grad_solve, grad_t_mat = calc_derivative(
-        simulation_path="tests/data",
+        simulation_path="tests/data/sinusoidal_direct",
         rank=50,
         min_preconditioning_size=1,
         n_tridiag=10,
