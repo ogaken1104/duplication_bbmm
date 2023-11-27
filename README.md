@@ -14,6 +14,7 @@
 ## Todo
 ### must
 - ~~calc whole log marginal likelihood and its derivative to check~~
+- change preconditioner to use jax: very slow but successful
 - implement inference by our BBMM
   - simple sin curve
     - ~~possible (if the condiiotn number is not too large ($\lt1e6$))~~
