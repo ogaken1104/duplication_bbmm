@@ -1,6 +1,11 @@
 from jax.config import config
 
 from tests.mpcg.calc_three_terms_random import calc_three_terms_random
+import os
+
+print("\n################################")
+print(os.path.basename(__file__))
+print("################################")
 
 config.update("jax_enable_x64", True)
 

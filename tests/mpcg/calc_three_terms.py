@@ -26,10 +26,6 @@ import bbmm.utils.preconditioner as precond
 
 config.update("jax_enable_x64", True)
 
-print("\n################################")
-print(os.path.basename(__file__))
-print("################################")
-
 
 def is_positive_definite(matrix):
     # 行列の固有値を計算
@@ -151,7 +147,7 @@ def calc_three_terms(
     )
     if precondition:
         cond_num = jnp.linalg.cond(precondition(K))
-        print(f"condition number of P^{-1}K: {cond_num:.3e}")
+        print(f"condition number of P^{-1}K: {cond_num:.3e}\n")
 
     # zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
     # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
@@ -219,7 +215,7 @@ def calc_three_terms(
         trace_rel_error_list.append(abs((trace - trace_linalg) / trace_linalg))
 
         # print(f"mean of dK: {jnp.mean(dK):.3e}")
-    print(f"trace_rel_error_list: {np.array(trace_rel_error_list)}")
+    # print(f"trace_rel_error_list: {np.array(trace_rel_error_list)}")
     # print(f"trace: {np.array(trace)}")
     # print(f"trace_linalg: {np.array(trace_linalg)}")
     trace_rel_error = np.mean(np.array(trace_rel_error_list))
@@ -227,5 +223,6 @@ def calc_three_terms(
     print(f"linear_solve_rel_error: {linear_solve_rel_error:.3e}")
     print(f"logdet_rel_error: {logdet_rel_error:.3e}")
     print(f"trace_rel_error: {trace_rel_error:.3e}")
+    print("\n\n")
 
     return linear_solve_rel_error, logdet_rel_error, trace_rel_error
