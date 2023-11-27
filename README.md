@@ -57,6 +57,7 @@
 - maybe high accuracy for linear solve and logdet is not needed (optimization seems succesful at even ~20% error)
 - 発散することがあるのは，n_tridiagや他のloopを大きくしすぎたときなのか？それ以外では発散しづらいのか？これは検証する必要がある
 - gpytorchのlazy_evaluated_kernel_tensor.pyを継承し，新たにblok-like covariance matrixを扱えるようにすることも選択肢→やられていないということは難しい
+- 誤差が相対的に小さな値$\epsilon$に到達するための反復回数は$\sqrt{\kappa}$に比例している
 
 
 ### result of chekcing the component of loss
