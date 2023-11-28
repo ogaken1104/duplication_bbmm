@@ -55,7 +55,7 @@ def rel_error(true, pred):
     return rel_error
 
 
-def calc_three_terms(
+def calc_three_terms_poiseuille(
     simulation_path: str = "tests/data/poiseuille_direct",
     rank: int = 5,
     min_preconditioning_size: int = 2000,

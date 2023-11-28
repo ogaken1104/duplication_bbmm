@@ -109,3 +109,15 @@
       - `probe_vectors = precond_lt.zero_mean_mvn_samples(num_random_probes)`
       - Is implementing this gives us better result?
         - seems better
+- poiseuilleのcovariance matrixも試したが，条件数が非常に大きいことには変わりがない
+  - 複雑な共分散行列を持っていることが原因でありそう
+
+
+- sinusoidal covariance matrixのsparsityをcheckした結果(threshold = 1e-08)
+  - no scale : 0.60
+  - scale x10: 0.64
+  - scale x100: 0.69
+- scaleしてもsparsityに大差はなく，sparse度合いも低い→疎行列とは言い切れないからICもあまり意味がなさそう？
+  - おそらくsparseと言われるのはゼロ要素の割合が90%くらい以上のもの
+- randomな配置でないことによって共分散行列が縮退しているのではないかと考えたが，ランダムにしても条件数に特に変化はなかった
+  - (1129_0と1129_3の比較)
