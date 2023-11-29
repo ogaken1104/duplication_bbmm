@@ -10,7 +10,7 @@ print("################################")
 config.update("jax_enable_x64", True)
 
 linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms(
-    simulation_path="tests/data",
+    simulation_path="tests/data/sinusoidal_direct",
     rank=15,
     min_preconditioning_size=1,
     n_tridiag=10,
