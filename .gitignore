@@ -3,4 +3,8 @@
 *.sh
 *.out
 *.err
-11*.ipynb
+*.ipynb
+!1112_train_predict_sin1D_10.ipynb
+!1117_sin_lap.ipynb
+!1117_train_predict_sp.ipynb
+!1120_train_predict_sp_scale.ipynb
