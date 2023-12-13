@@ -93,4 +93,4 @@ def apply_permutation_numpy_mmm(
         )
         ## maybe cuase errors when batch is not zero
 
-    return np.asarray(permute_submatrix(matrix, left_permutation, right_permutation))
+    return permute_submatrix(matrix, left_permutation, right_permutation)

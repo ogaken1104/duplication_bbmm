@@ -84,8 +84,15 @@ def apply_permutation_numpy(
         # return matrix[
         #     # (*batch_idx, np.expand_dims(left_permutation, -1), np.expand_dims(right_permutation, -2))
         # ]
-        return matrix[left_permutation][right_permutation].reshape(
-            1, -1
-        )  ## maybe cuase errors when batch is not zero
+        # return matrix[left_permutation][right_permutation].reshape(
+        #     1, -1
+        # )
+        return matrix.__getitem__(
+            (
+                np.expand_dims(left_permutation, -1),
+                # np.expand_dims(right_permutation, -2), ## right permutation is not used at this point, for easier implementation of linear operator
+            )
+        )
+        ## maybe cuase errors when batch is not zero
 
-    return np.asarray(permute_submatrix(matrix, left_permutation, right_permutation))
+    return permute_submatrix(matrix, left_permutation, right_permutation)

@@ -89,7 +89,6 @@ def apply_permutation_jax_mmm(
                 # np.expand_dims(right_permutation, -2), ## right permutation is not used at this point, for easier implementation of linear operator
             )
         )
-        ## maybe cuase errors when batch is not zero
 
     return permute_submatrix(matrix, left_permutation, right_permutation)
 

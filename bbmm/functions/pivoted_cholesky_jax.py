@@ -15,7 +15,8 @@ def pivoted_cholesky_jax(mat, error_tol=1e-3, return_pivots=None, max_iter=15):
     n = mat.shape[-1]
     max_iter = min(max_iter, n)
 
-    d = jnp.diag(mat)
+    # d = jnp.diag(mat)
+    d = jnp.diagonal(mat, axis1=-2, axis2=-1)
     orig_error = jnp.max(d)
     error = jnp.linalg.norm(d, 1) / orig_error
     pi = jnp.arange(n)

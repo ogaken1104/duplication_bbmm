@@ -25,8 +25,9 @@
     - not converge (becuase of high cond. #)
   - try larger number of points (~10^5~7)
 
-### should
-- find better preconditioning way?    
+### should in future
+- find better preconditioning way?
+- elucidate why pivoted cholesky decompositoin by jax is slow than numpy x10.
 
 ## test
 - what to test
