@@ -18,6 +18,8 @@ linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms(
     max_iter_cg=2000,
     tolerance=1,
     scale=10.0,
+    length=0.7,
+    cov_scale=1.0,
 )
 tol_solve_rel_error = 1e-2
 tol_rel_error = 5e-02
