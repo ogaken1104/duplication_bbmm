@@ -28,9 +28,9 @@ def setup_preconditioner(
     if len(matrix) < min_preconditioning_size:
         return None, None, None
     if rank is None:
-        piv_chol_self = pivoted_cholesky_jax(matrix)
+        piv_chol_self = pivoted_cholesky_numpy(matrix)
     else:
-        piv_chol_self = pivoted_cholesky_jax(matrix, max_iter=rank)
+        piv_chol_self = pivoted_cholesky_numpy(matrix, max_iter=rank)
     n, k = piv_chol_self.shape
     # print(f'n: {n} k: {k}')
     eye = jnp.eye(k)
