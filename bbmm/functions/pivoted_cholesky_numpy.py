@@ -19,7 +19,7 @@ def pivoted_cholesky_numpy(mat, error_tol=1e-3, return_pivots=None, max_iter=15)
     n = mat.shape[-1]
     max_iter = min(max_iter, n)
 
-    d = np.diag(mat).copy()
+    d = np.diag(mat).copy()  # This part is not compatible with jax.grad
     orig_error = np.max(d)
     error = np.linalg.norm(d, 1) / orig_error
     pi = np.arange(n)

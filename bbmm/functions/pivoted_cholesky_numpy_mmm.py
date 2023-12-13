@@ -1,12 +1,15 @@
 from functools import partial
 from typing import Optional
 
+import jax.numpy as jnp
 import numpy as np
 
 from bbmm.operators._linear_operator import LinearOp
 
 
-def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter=15):
+def pivoted_cholesky_numpy_mmm(
+    mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter=15
+):
     """
     mat: JAX NumPy array of N x N
 
@@ -41,7 +44,7 @@ def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter
         L_mpim = L[m, pim]
 
         if m + 1 < n:
-            row = apply_permutation(mat, pim, None)
+            row = apply_permutation_numpy_mmm(mat, pim, None)
             row = row.flatten()
             pi_i = pi[m + 1 :]
 
@@ -67,7 +70,7 @@ def pivoted_cholesky(mat: LinearOp, error_tol=1e-3, return_pivots=None, max_iter
     return L.T
 
 
-def apply_permutation(
+def apply_permutation_numpy_mmm(
     matrix,
     left_permutation,
     right_permutation,

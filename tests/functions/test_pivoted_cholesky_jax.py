@@ -1,3 +1,5 @@
+import time
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -52,8 +54,15 @@ def test_pivoted_cholesky():
     L_torch = gpytorch.pivoted_cholesky(torch.from_numpy(np.array(A)), rank=rank)
     assert jnp.allclose(L, L_torch.numpy())
 
+
+def test_pivoted_cholesky_random():
     ## 1.2. ランダムに生成された行列の場合
+    rank = 5
+    N = 60
     K = generate_K(N)
+    start_time = time.time()
     L = pivoted_cholesky_jax(K, max_iter=rank)
+    end_time = time.time()
+    print(f"random: {end_time-start_time:.2f}")
     L_torch = gpytorch.pivoted_cholesky(torch.from_numpy(np.array(K)), rank=rank)
     assert jnp.allclose(L, L_torch.numpy())

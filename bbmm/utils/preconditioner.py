@@ -18,6 +18,7 @@ def setup_preconditioner(
     rank: int = 15,
     noise: float = 1e-06,
     min_preconditioning_size: int = 2000,
+    func_pivoted_cholesky: callable = pivoted_cholesky_numpy,
 ):
     """
     function to setup preconditioner
@@ -28,9 +29,9 @@ def setup_preconditioner(
     if len(matrix) < min_preconditioning_size:
         return None, None, None
     if rank is None:
-        piv_chol_self = pivoted_cholesky_numpy(matrix)
+        piv_chol_self = func_pivoted_cholesky(matrix)
     else:
-        piv_chol_self = pivoted_cholesky_numpy(matrix, max_iter=rank)
+        piv_chol_self = func_pivoted_cholesky(matrix, max_iter=rank)
     n, k = piv_chol_self.shape
     # print(f'n: {n} k: {k}')
     eye = jnp.eye(k)
