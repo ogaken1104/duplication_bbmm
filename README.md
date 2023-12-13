@@ -2,11 +2,11 @@
 
 ## Summary of use case
 - term needed to calculate
-    - loss: $\hat{K}_{XX}^{-1}\boldsymbol{y}, \mathrm{log}|\hat{K}_{XX}|, $
+    - loss: $\hat{K}_{XX}^{-1}\boldsymbol{y}, \mathrm{log}|\hat{K}_{XX}|$
     - gradient of loss: $\hat{K}_{XX}^{-1}\boldsymbol{y}, \mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$←in gpytorch, this is comupted using "autograd" but in jax implementation we may should use analytical derivative (because of the different autograd scheme)
     - prediction of mean:  $\hat{K}_{XX}^{-1}\boldsymbol{y}$
     - prediction of std: $\hat{K}_{XX}^{-1}\boldsymbol{k}_{X\boldsymbol{x}^*}$
-- variation of calculation method
+- use cases
     1. calculate all three terms: linear solve, log determinant, trace term
     2. calculate only linear solve
 
@@ -22,14 +22,11 @@
   - sin curve with its laplasian
     - possible
   - stokes eq in 2D
-    - precondition is not still implemented
-  - larger number of points (~10^5~7)
+    - not converge (becuase of high cond. #)
+  - try larger number of points (~10^5~7)
 
 ### should
-- block covariance matrixに適したconditioningの方法はあるか？
-    - スケールして、かつfの値を調整せずに、得たuを調整すればcondition numberを低く抑えられそう
-    - Johnに調査を頼むことも考える
-    
+- find better preconditioning way?    
 
 ## test
 - what to test
@@ -37,27 +34,26 @@
 - how to test
     - run `pytest ./test`. then all test in ./test is done
 
+## Program Structue
+- functions
+  - pivoted_chokesky_xxx.py: pivoted cholesky decompoisition using numpy or jax
+- operators: class for enablling matrix-matrix multiplicatoin
+  - _linear_operator.py: base class
+  - lazy_evaluated_kernel_tensor.py: class for covariance matrix
+- utils: calculation scheme
+  - calc_logdet
+  - calc_trace
+  - conjugate_gradient
+  - preconditioner
+  - mmm (do not use)
+
 ## desing of class
 ### linear_operator
 - methods:
   - matmul, _diagonal, shape
-### precond_lt
+### diag_linear_operator, root_linear_operator
 - methods:
   - zero_mean_mvn_samples
-### diag_linear_operator, rootlinearoperator
-- methods:
-  - zero_mean_mvn_samples
-
-
-
-## memo
-- we can make mmm firster by using "lax.switch" and "lax.cond" instead of "if" statement.
-- trace termは実際には計算されず、自動微分が用いられている、、！→trace termを計算する必要はない
-  - [参考](ttps://github.com/cornellius-gp/gpytorch/discussions/1949)
-- maybe high accuracy for linear solve and logdet is not needed (optimization seems succesful at even ~20% error)
-- 発散することがあるのは，n_tridiagや他のloopを大きくしすぎたときなのか？それ以外では発散しづらいのか？これは検証する必要がある
-- gpytorchのlazy_evaluated_kernel_tensor.pyを継承し，新たにblok-like covariance matrixを扱えるようにすることも選択肢→やられていないということは難しい
-- 誤差が相対的に小さな値$\epsilon$に到達するための反復回数は$\sqrt{\kappa}$に比例している
 
 
 ### result of chekcing the component of loss
@@ -77,47 +73,3 @@
 |sin (small eps), 10 points|2e3|0.75, 2.1|0.73, 1.9||bbmm: 5e-5, default: 1e-4|
 |sin x100(small eps)|1e6|0.39, 2.39|0.13, 15.1||not perfect|
 
-## Log
-- ~~develop a test code~~
-- ~~make mmm_A function~~
-    - ~~for K~~
-    - ~~for $\frac{d\hat{K}_{XX}}{d\theta}$~~←computation is not efficient at this point.
-    - ~~analyze the time complexity~~
-- ~~modify mpcg algorithm to receive mmm function and check if we can solve~~
-  - linear_cg.py and pivoted_cholesky.py
-    - for pivoted cholesky, implementing linear_operator class may be needed
-      - can obtain each row, _diagonal, shape, __getitem__, etc.
-- ~~apply optimization stopping for alhpa, beta to obtain better $\mathrm{Tr}(\hat{K}_{XX}^{-1}\frac{d\hat{K}_{XX}}{d\theta})$~~
-    - ~~has_convergedに基づいてalphaをzeroでmaskする(lax.select)~~
-    - epsに基づいて,alpha, betaのzero divisionを避ける(lax.cond for each terms →lax .select)
-      - implemented, but **almost no change**
-- check if logdet term is calculated correctly
-  - ~~when precondition, error becomes large→is precond_log_det is accurate?~~
-    - **why result changes when two ways of calc logdet in torch? this may be the key**
-      - this will probably because the difference of random seed to generate random matrix
-      - when giving the same t_mat, result was almost consistent, so it's ok
-    - N<=800ではcholeskyを使って解く設定になっていたことが原因....！つまらないところで止まってしまっていた....！
-    - probe_vectorはnormalizeしなくても，linear_solveとlogdetはほとんど変わらず，trace_termは良くなった→一旦なし
-  - ~~how to generate zs efficiently given preconditioner $P$~~
-    - _pivoted_cholesky.py中の`self._precond_lt = PsdSumLinearOperator(RootLinearOperator(self._piv_chol_self), self._diag_tensor)`を実装でき、またlinear_operator classにzero_mean_mvn_samplesを実装できればよい
-- **preconditionerのrankを増やすとlogdetの誤差が大きくなることは解決しなければならない(?)**
-  - notebookでは起こったが，スクリプトをtestした限りは問題なかった？
-  - これはおそらく，preconditionerを増やすことにより収束回数が小さくなり，その結果last_tridiag_iterが非常に小さくなっていることが原因であろう→max_tridiag_iterをある程度大きな値に設定しておくことが推奨される
-      
-- (check if trace term is really calculated correctly)
-   - ~~in gpytorch imprementation, probe_vector is generated from zero_mean_mvn_samples those variance is precond_lt $P=LL^t+\sigma^2I$~~
-      - `probe_vectors = precond_lt.zero_mean_mvn_samples(num_random_probes)`
-      - Is implementing this gives us better result?
-        - seems better
-- poiseuilleのcovariance matrixも試したが，条件数が非常に大きいことには変わりがない
-  - 複雑な共分散行列を持っていることが原因でありそう
-
-
-- sinusoidal covariance matrixのsparsityをcheckした結果(threshold = 1e-08)
-  - no scale : 0.60
-  - scale x10: 0.64
-  - scale x100: 0.69
-- scaleしてもsparsityに大差はなく，sparse度合いも低い→疎行列とは言い切れないからICもあまり意味がなさそう？
-  - おそらくsparseと言われるのはゼロ要素の割合が90%くらい以上のもの
-- randomな配置でないことによって共分散行列が縮退しているのではないかと考えたが，ランダムにしても条件数に特に変化はなかった
-  - (1129_0と1129_3の比較)
