@@ -65,6 +65,7 @@ def calc_three_terms(
     max_tridiag_iter: int = 20,
     length: float = 2.3,
     cov_scale: float = 0.0,
+    epsilon: float = None,
 ):
     params_main, params_prepare, lbls = load_params(f"{simulation_path}/data_input")
     params_model = params_main["model"]
@@ -75,6 +76,8 @@ def calc_three_terms(
     params_generate_training = params_prepare["generate_training"]
     params_generate_test = params_prepare["generate_test"]
     params_kernel_arg = params_prepare["kernel_arg"]
+    if epsilon:
+        params_model["epsilon"] = epsilon
 
     # # prepare initial hyper-parameter
     # init = get_init(

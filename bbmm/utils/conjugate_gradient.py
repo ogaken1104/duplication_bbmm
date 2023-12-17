@@ -63,7 +63,7 @@ def mpcg_bbmm(
         - tolerance: l2 norm tolerance for residual
         - print_process: if print optimization detail at each step
         - eps: norm less than this is considered to be 0
-        - n_tridiag: number of the first columns of rhs to be tridiagonalized
+        - n_tridiag: number of the first columns of rhs to be tridiagonalized (number of probe vectors)
         - n_tridiag_iter: maximum size of the tridiagonalization matrix
 
     Returns:

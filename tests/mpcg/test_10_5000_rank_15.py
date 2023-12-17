@@ -1,7 +1,8 @@
+import os
+
 from jax.config import config
 
 from tests.mpcg.calc_three_terms import calc_three_terms
-import os
 
 print("\n################################")
 print(os.path.basename(__file__))

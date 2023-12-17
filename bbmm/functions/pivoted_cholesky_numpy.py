@@ -14,6 +14,8 @@ def pivoted_cholesky_numpy(mat, error_tol=1e-3, return_pivots=None, max_iter=15)
 
 
     refered to this discussion
+    https://github.com/cornellius-gp/gpytorch/discussions/2067
+    code
     https://colab.research.google.com/drive/1sLNdLi3sI0JKO9ooOsuS6aKFBDCdN3n8?usp=sharing#scrollTo=KE0CTvRmN-nP
     """
     n = mat.shape[-1]

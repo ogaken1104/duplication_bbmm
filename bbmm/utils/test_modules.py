@@ -28,6 +28,12 @@ def is_positive_definite(matrix):
         return False
 
 
+def check_cond(matrix):
+    cond_num = jnp.linalg.cond(matrix)
+    print(f"{cond_num:.2e}")
+    return cond_num
+
+
 def rel_error(true, pred):
     nonzero_index = jnp.where(true != 0.0)
     true = true[nonzero_index]

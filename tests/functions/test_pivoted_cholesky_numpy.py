@@ -38,3 +38,16 @@ def test_pivoted_cholesky_numpy_random():
     print(f"random: {end_time-start_time:.2f}")
     L_torch = gpytorch.pivoted_cholesky(torch.from_numpy(np.array(K)), rank=rank)
     assert jnp.allclose(L, L_torch.numpy())
+
+
+def test_pivoted_cholesky_numpy_random_rank_400():
+    rank = 40
+    N = 1000
+    ## 1.2. ランダムに生成された行列の場合
+    K = generate_K(N)
+    start_time = time.time()
+    L = pivoted_cholesky_numpy(K, max_iter=rank)
+    end_time = time.time()
+    print(f"random: {end_time-start_time:.2f}")
+    L_torch = gpytorch.pivoted_cholesky(torch.from_numpy(np.array(K)), rank=rank)
+    assert jnp.allclose(L, L_torch.numpy())
