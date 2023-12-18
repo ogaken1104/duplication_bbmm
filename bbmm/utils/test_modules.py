@@ -39,3 +39,9 @@ def rel_error(true, pred):
     true = true[nonzero_index]
     pred = pred[nonzero_index]
     return jnp.mean(jnp.abs((true - pred) / true))
+
+
+def rel_error_scaler(true, pred):
+    if true == 0.0:
+        return "truth value is zero"
+    return jnp.mean(jnp.abs((true - pred) / true))
