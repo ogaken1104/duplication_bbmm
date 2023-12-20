@@ -1,6 +1,6 @@
 from jax.config import config
 
-from tests.mpcg.calc_derivative import calc_derivative
+from tests.mpcg_for_test.calc_derivative import calc_derivative
 
 config.update("jax_enable_x64", True)
 

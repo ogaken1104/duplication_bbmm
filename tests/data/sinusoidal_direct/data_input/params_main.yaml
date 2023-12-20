@@ -5,17 +5,29 @@ model:
   index_optimize_noise: null
   init_kernel_hyperparameter:
     pp:
+    - 1.2
+    - -1.2
+    - -1.2
+    uxp:
     - 0.0
-    - 1.0
-    - 1.0
+    - -1.2
+    - -1.2
     uxux:
+    - 1.2
+    - -1.2
+    - -1.2
+    uxuy:
     - 0.0
-    - 1.0
-    - 1.0
+    - -1.2
+    - -1.2
+    uyp:
+    - 0.0
+    - -1.2
+    - -1.2
     uyuy:
-    - 0.0
-    - 1.0
-    - 1.0
+    - 1.2
+    - -1.2
+    - -1.2
   input_dim: 2
   kernel_form: product
   kernel_type: se

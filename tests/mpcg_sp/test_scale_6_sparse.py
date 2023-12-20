@@ -1,7 +1,8 @@
+import os
+
 from jax.config import config
 
-from tests.mpcg.calc_three_terms_poiseuille import calc_three_terms_poiseuille
-import os
+from tests.mpcg_for_test.calc_three_terms import calc_three_terms
 
 print("\n################################")
 print(os.path.basename(__file__))
@@ -9,15 +10,18 @@ print("################################")
 
 config.update("jax_enable_x64", True)
 
-linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms_poiseuille(
-    simulation_path="tests/data/poiseuille_direct",
+linear_solve_rel_error, logdet_rel_error, trace_rel_error = calc_three_terms(
+    simulation_path="tests/data/sinusoidal_direct_sparse",
     rank=15,
     min_preconditioning_size=2000,
     n_tridiag=10,
-    max_tridiag_iter=20,
+    max_tridiag_iter=40,
     max_iter_cg=2000,
-    tolerance=1,
-    scale=100.0,
+    tolerance=0.01,
+    scale=6.0,
+    length=0.5,
+    cov_scale=2.0,
+    epsilon=1e-4,
 )
 tol_solve_rel_error = 1e-2
 tol_rel_error = 5e-02

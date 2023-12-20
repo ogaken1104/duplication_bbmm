@@ -34,8 +34,11 @@ def check_cond(matrix):
     return cond_num
 
 
-def rel_error(true, pred):
-    nonzero_index = jnp.where(true != 0.0)
+def rel_error(true, pred, zero_threshold=None):
+    if zero_threshold:
+        nonzero_index = np.where(abs(true) > zero_threshold)
+    else:
+        nonzero_index = jnp.where(true != 0.0)
     true = true[nonzero_index]
     pred = pred[nonzero_index]
     return jnp.mean(jnp.abs((true - pred) / true))
@@ -45,3 +48,11 @@ def rel_error_scaler(true, pred):
     if true == 0.0:
         return "truth value is zero"
     return jnp.mean(jnp.abs((true - pred) / true))
+
+
+def check_cholesky_inverse_accuracy(K):
+    L = jnp.linalg.cholesky(K)
+    I_reconstructed = jnp.linalg.solve(L.T, jnp.linalg.solve(L, K))
+    I_reconstructed /= len(K)
+    res = jnp.sum(jnp.linalg.norm(I_reconstructed, axis=0))
+    print(res)

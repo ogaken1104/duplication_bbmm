@@ -165,10 +165,11 @@ def calc_three_terms(
     #     shape=(n_tridiag,),
     # ).T
     # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
-    if precondition:
-        zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
-    else:
-        zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
+    # if precondition:
+    #     zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
+    # else:
+    #     pass
+    zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
     # zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
     # zs = zs / zs_norms
     rhs = jnp.concatenate([zs, delta_y_train.reshape(-1, 1)], axis=1)
