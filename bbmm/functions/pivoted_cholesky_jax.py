@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 
 # from jax import jit, lax, vmap
+from bbmm.operators._linear_operator import LinearOp
 
 
 def pivoted_cholesky_jax(mat, error_tol=1e-3, return_pivots=None, max_iter=15):
@@ -16,7 +17,12 @@ def pivoted_cholesky_jax(mat, error_tol=1e-3, return_pivots=None, max_iter=15):
     max_iter = min(max_iter, n)
 
     # d = jnp.diag(mat)
-    d = jnp.diagonal(mat, axis1=-2, axis2=-1)
+    # d = jnp.diagonal(mat, axis1=-2, axis2=-1)
+    if isinstance(mat, LinearOp):
+        d = mat._diagonal()
+    else:
+        d = jnp.diagonal(mat, axis1=-2, axis2=-1)
+
     orig_error = jnp.max(d)
     error = jnp.linalg.norm(d, 1) / orig_error
     pi = jnp.arange(n)

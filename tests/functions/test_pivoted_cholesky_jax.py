@@ -30,6 +30,7 @@ def test_pivoted_cholesky_random():
     rank = 50
     N = 1000
     K = generate_K(N)
+    L = pivoted_cholesky_jax(K, max_iter=rank)  # compile
     start_time = time.time()
     L = pivoted_cholesky_jax(K, max_iter=rank)
     end_time = time.time()
