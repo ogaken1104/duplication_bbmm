@@ -72,7 +72,7 @@ def generate_random_tridiagonal_arrays(m, n):
     return result_array
 
 
-def assert_ogdet(
+def assert_logdet(
     N,
     noise,
     rank,
@@ -186,7 +186,7 @@ def test_logdet_random_50():
     max_cg_iterations = 1000
     max_tridiag_iter = 20
     cg_tolerance = 1.0
-    assert_ogdet(
+    assert_logdet(
         N, noise, rank, n_tridiag, max_cg_iterations, max_tridiag_iter, cg_tolerance
     )
 
@@ -201,7 +201,7 @@ def test_logdet_random_50():
 #     max_tridiag_iter = 40
 #     cg_tolerance = 0.01
 #     _K = np.load("tests/data/cov_sinusoidal_direct.npy")
-#     assert_ogdet(
+#     assert_logdet(
 #         N,
 #         noise,
 #         rank,

@@ -23,6 +23,7 @@ import bbmm.utils.calc_logdet as calc_logdet
 import bbmm.utils.calc_trace as calc_trace
 import bbmm.utils.conjugate_gradient as cg
 import bbmm.utils.preconditioner as precond
+import bbmm.utils.test_modules as test_modules
 
 config.update("jax_enable_x64", True)
 
@@ -155,8 +156,8 @@ def calc_three_terms(
     if precondition:
         cond_num = jnp.linalg.cond(precondition(K))
         print(f"condition number of P^{-1}K: {cond_num:.3e}\n")
-
-    # zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
+    # zs_norm = jnp.linalg.norm(zs, axis=0)
+    # zs = zs / zs_norm
     # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
     # zs = jax.random.multivariate_normal(
     #     jax.random.PRNGKey(0),
@@ -165,13 +166,15 @@ def calc_three_terms(
     #     shape=(n_tridiag,),
     # ).T
     # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
-    # if precondition:
-    #     zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
+    if precondition:
+        zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
+    else:
+        zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
     # else:
     #     pass
-    zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
-    # zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
-    # zs = zs / zs_norms
+    # zs = jax.random.normal(jax.random.PRNGKey(0), (len(delta_y_train), n_tridiag))
+    zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
+    zs = zs / zs_norms
     rhs = jnp.concatenate([zs, delta_y_train.reshape(-1, 1)], axis=1)
     time_end_precondition = time.time()
     Kinvy, j, t_mat = cg.mpcg_bbmm(
@@ -193,7 +196,9 @@ def calc_three_terms(
     v = jnp.linalg.solve(L, delta_y_train)
     Kinvy_linalg = jnp.linalg.solve(L.T, v)
     # linear_solve_rel_error = jnp.mean((Kinvy[:, -1] - Kinvy_linalg) / Kinvy_linalg)
-    linear_solve_rel_error = jnp.mean(rel_error(Kinvy_linalg, Kinvy[:, -1]))
+    linear_solve_rel_error = test_modules.rel_error_scaler(
+        delta_y_train @ Kinvy_linalg, delta_y_train @ Kinvy[:, -1]
+    )
 
     ## calc by logdet
     logdet = calc_logdet.calc_logdet(K.shape, t_mat, precond_logdet_cache)
@@ -211,16 +216,15 @@ def calc_three_terms(
     I = jnp.eye(len(delta_y_train))
     Kinv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
     for dK in dKdtheta:
-        if precondition:
-            trace = calc_trace.calc_trace(
-                Kinvy, dK, precondition(zs), n_tridiag=n_tridiag
-            )
-        else:
-            trace = calc_trace.calc_trace(Kinvy, dK, zs, n_tridiag=n_tridiag)
-
+        trace = calc_trace.calc_trace(
+            Kinvy[:, :-1], dK, zs, n_tridiag=n_tridiag, precondition=precondition
+        )
         trace_linalg = jnp.sum(jnp.diag(jnp.matmul(Kinv, dK)))
 
         trace_rel_error_list.append(abs((trace - trace_linalg) / trace_linalg))
+
+        print(f"trace: {trace:.3e}")
+        print(f"trace: {trace_linalg:.3e}\n")
 
         # print(f"mean of dK: {jnp.mean(dK):.3e}")
     # print(f"trace_rel_error_list: {np.array(trace_rel_error_list)}")

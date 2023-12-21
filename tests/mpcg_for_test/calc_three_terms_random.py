@@ -117,8 +117,8 @@ def calc_three_terms_random(
         zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=0)
     else:
         zs = jax.random.normal(jax.random.PRNGKey(0), (N, n_tridiag))
-    # zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
-    # zs = zs / zs_norms
+    zs_norms = jnp.linalg.norm(zs, axis=0, keepdims=True)
+    zs = zs / zs_norms
     # generate zs deterministically from precond_lt = $LL^T+\sigma^2I$
     # zs = jnp.matmul(jnp.sqrt(precond_lt), zs)
     rhs = jnp.concatenate([zs, y], axis=1)
@@ -161,14 +161,17 @@ def calc_three_terms_random(
     trace_rel_error_list = []
     I = jnp.eye(len(y))
     Kinv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
-    if precondition:
-        trace = calc_trace.calc_trace(
-            Kinvy, dKdtheta, precondition(zs), n_tridiag=n_tridiag
-        )
-    else:
-        trace = calc_trace.calc_trace(Kinvy, dKdtheta, zs, n_tridiag=n_tridiag)
-
+    trace = calc_trace.calc_trace(
+        Kinvy[:, :-1] * zs_norms,
+        dKdtheta,
+        zs * zs_norms,
+        n_tridiag=n_tridiag,
+        precondition=precondition,
+    )
     trace_linalg = jnp.sum(jnp.diag(jnp.matmul(Kinv, dKdtheta)))
+    print(f"trace: {trace:.3e}")
+    print(f"trace: {trace_linalg:.3e}\n")
+
     # print(f"trace: {trace:.3e}")
     # print(f"trace_linalg: {trace_linalg:.3e}\n")
 
