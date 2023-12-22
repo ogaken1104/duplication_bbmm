@@ -19,7 +19,7 @@ class RootLinearOp(LinearOp):
 
     def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         return self.root.matmul(
-            self.root.matmul(rhs)
+            self.root.t_matmul(rhs)
         )  # different from reference: do not permutate
 
     def root_decomposition(self):

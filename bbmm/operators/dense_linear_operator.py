@@ -20,6 +20,9 @@ class DenseLinearOp(LinearOp):
     def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         return jnp.matmul(self.array, rhs)
 
+    def t_matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
+        return jnp.matmul(self.array.T, rhs)
+
     def __getitem__(self, index) -> jnp.ndarray:
         return self.array[index]
 
