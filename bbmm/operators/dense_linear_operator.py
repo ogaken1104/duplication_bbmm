@@ -5,6 +5,8 @@ import numpy as np
 
 from bbmm.operators._linear_operator import LinearOp
 
+# from bbmm.operators.diag_linear_operator import DiagLinearOp
+
 
 class DenseLinearOp(LinearOp):
     def __init__(self, array: jnp.ndarray) -> None:
@@ -33,14 +35,13 @@ def to_linear_operator(obj: Union[jnp.array, LinearOp]) -> LinearOp:
     - If `obj` is a LinearOperator, this function does nothing.
     - If `obj` is a (normal) jnp.array, this function wraps it with a `DenseLinearOperator`.
     """
-
     if isinstance(obj, jnp.ndarray) or isinstance(obj, np.ndarray):
         return DenseLinearOp(obj)
     elif isinstance(obj, LinearOp):
         return obj
     else:
         raise TypeError(
-            "object of class {} cannot be made into a LinearOperator".format(
+            "object of class {} cannot be made into a LinearOp".format(
                 obj.__class__.__name__
             )
         )

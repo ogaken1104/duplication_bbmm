@@ -4,6 +4,7 @@
 *.out
 *.err
 *.ipynb
+*workspace
 !1112_train_predict_sin1D_10.ipynb
 !1117_sin_lap.ipynb
 !1117_train_predict_sp.ipynb
