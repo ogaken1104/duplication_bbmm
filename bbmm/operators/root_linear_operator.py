@@ -24,3 +24,6 @@ class RootLinearOp(LinearOp):
 
     def root_decomposition(self):
         return self
+
+    def _diagonal(self) -> jnp.array:
+        return jnp.sum(self.root.array**2, axis=-1)

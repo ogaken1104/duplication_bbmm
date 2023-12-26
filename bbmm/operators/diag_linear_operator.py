@@ -24,3 +24,6 @@ class DiagLinearOp(LinearOp):
 
     def sqrt(self):
         return self.__class__(jnp.sqrt(self._diag))
+
+    def _diagonal(self) -> jnp.array:
+        return self._diag
