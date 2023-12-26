@@ -142,33 +142,13 @@ def mpcg_bbmm(
         beta = jnp.sum(jnp.multiply(r1, z1), axis=0) / beta
         beta = lax.select(is_zero, zeros_num_rhs, beta)
         d = z1 + beta * d
-        # r0 = r1
-        # z0 = z1
 
-        alpha_tridiag = alpha[:n_tridiag]
-        beta_tridiag = beta[:n_tridiag]
-        return d, r1, z1, u, alpha_tridiag, beta_tridiag, is_zero
-
-    @jit
-    def linear_cg_updates_no_tridiag(A, d, r0, z0, u):
-        v = jnp.dot(A, d)
-        alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
-        if alpha.ndim >= 2:
-            u = u + jnp.diag(alpha) * d
-            r1 = r0 - jnp.diag(alpha) * v
+        if n_tridiag:
+            alpha_tridiag = alpha[:n_tridiag]
+            beta_tridiag = beta[:n_tridiag]
+            return d, r1, z1, u, alpha_tridiag, beta_tridiag, is_zero
         else:
-            u = u + alpha * d
-            r1 = r0 - alpha * v
-
-        z1 = precondition(r1)
-        beta = jnp.matmul(r1.T, z1) / jnp.matmul(r0.T, z0)
-        if beta.ndim >= 2:
-            d = z1 + jnp.diag(beta) * d
-        else:
-            d = z1 + beta * d
-        r0 = r1
-        z0 = z1
-        return d, r0, z0, u
+            return d, r1, z1, u, is_zero
 
     for j in range(max_iter_cg):
         if n_tridiag:
@@ -176,7 +156,9 @@ def mpcg_bbmm(
                 A, d, r0, z0, u, n_tridiag, is_zero
             )
         else:
-            d, r0, z0, u = linear_cg_updates_no_tridiag(A, d, r0, z0, u)
+            d, r0, z0, u, is_zero = linear_cg_updates(
+                A, d, r0, z0, u, n_tridiag, is_zero
+            )
 
         if n_tridiag and j < n_tridiag_iter and update_tridiag:
             ### TODO implement setting coverged alpha_tridiag 0.
