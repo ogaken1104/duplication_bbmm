@@ -47,14 +47,14 @@ class PsdSumLinearOp(SumLinearOp):
         #         f"second linear op must be DiagLinearOp, but now {self.linear_ops[1].__class__.__name__}"
         #     )
 
-        L = self.linear_ops[0].root
+        L = self.linear_ops[0].root.array
         sigma = self.linear_ops[1]._diag[0]
         eye = jnp.eye(L.shape[1])
-        sigma_LTL = sigma * eye + L.t_matmul(L.matmul(eye))
+        sigma_LTL = sigma * eye + jnp.matmul(L.T, L)
 
         cho_L = jnp.linalg.cholesky(sigma_LTL)
         Inv = jnp.linalg.solve(
             cho_L.T, jnp.linalg.solve(cho_L, jnp.eye(cho_L.shape[0]))
         )
 
-        return L.matmul(Inv)
+        return jnp.matmul(L, Inv)

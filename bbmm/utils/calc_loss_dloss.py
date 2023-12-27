@@ -127,6 +127,7 @@ def setup_loss_dloss_mpcg(
             PinvdPz = jnp.zeros_like(zs)
 
         for i, dK in enumerate(dKdtheta):
+            ## for large cond. # covariance, usually not reach convergence here.
             KinvdKz, j = cg.mpcg_bbmm(
                 K,
                 jnp.matmul(dK, zs),
