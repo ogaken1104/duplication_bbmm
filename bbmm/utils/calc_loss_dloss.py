@@ -27,12 +27,15 @@ def setup_loss_dloss_mpcg(
         ## this part can be changed when K is LinearOp ##
         r, delta_y, noise = args
 
-        K = gp_model.trainingK_all(init, r)
-        K = gp_model.add_eps_to_sigma(K, noise, noise_parameter=None)
+        _K = gp_model.trainingK_all(init, r)
+        K = gp_model.add_eps_to_sigma(_K, noise, noise_parameter=None)
         ######################################
 
         precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
-            K, rank=rank, noise=noise, min_preconditioning_size=min_preconditioning_size
+            _K,
+            rank=rank,
+            noise=noise,
+            min_preconditioning_size=min_preconditioning_size,
         )
         if precondition:
             zs = precond_lt.zero_mean_mvn_samples(n_tridiag)
@@ -57,6 +60,9 @@ def setup_loss_dloss_mpcg(
         logdet = calc_logdet.calc_logdet(K.shape, t_mat, precond_logdet_cache)
         yKy = jnp.dot(delta_y, Kinvy[:, -1])
         loss = (yKy + logdet) / 2 + len(delta_y) / 2 * jnp.log(jnp.pi * 2)
+
+        ## jeffery's prior
+        loss += jnp.sum(init)
 
         ## calc dloss
         def calc_trainingK(theta):
@@ -150,7 +156,7 @@ def setup_loss_dloss_mpcg(
             dloss_i = (-yKdKKy + tau) / 2
             dloss = dloss.at[i].set(dloss_i)
         # add derivative of jeffery's prior
-        dloss += 1
+        dloss += 1.0
         # print(dloss)
         return loss / gp_model.sec_tr[-1], dloss / gp_model.sec_tr[-1]
 

@@ -26,14 +26,14 @@ def setup_predictor_mpcg(
     def predictor_mpcg(opt, *args):
         r_test, μ_test, r, delta_y, noise = args
 
-        K = gp_model.trainingK_all(opt, r)
-        K = gp_model.add_eps_to_sigma(K, noise, noise_parameter=None)
+        _K = gp_model.trainingK_all(opt, r)
+        K = gp_model.add_eps_to_sigma(_K, noise, noise_parameter=None)
 
         Kab = gp_model.mixedK_all(opt, r_test, r)
         Kaa = gp_model.testK_all(opt, r_test)
 
         precondition, _, _ = precond.setup_preconditioner(
-            K,
+            _K,
             rank=rank,
             noise=noise,
             min_preconditioning_size=min_preconditioning_size,

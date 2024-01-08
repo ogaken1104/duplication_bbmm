@@ -82,6 +82,7 @@ def assert_logdet(
     cg_tolerance,
     min_preconditioning_size=2000,
     _K=None,
+    seed=0,
 ):
     # set parameters
     linear_operator.settings.max_cg_iterations._set_value(cg_tolerance)
@@ -116,6 +117,13 @@ def assert_logdet(
     precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
         K, rank=rank, noise=noise, min_preconditioning_size=min_preconditioning_size
     )
+    if precondition:
+        zs = precond_lt.zero_mean_mvn_samples(n_tridiag, seed=seed)
+    else:
+        zs = jax.random.normal(jax.random.PRNGKey(seed), (len(K), n_tridiag))
+    zs_norm = jnp.linalg.norm(zs, axis=0)
+    zs = zs / zs_norm
+
     # gpytorch
     preconditioner_torch, _, precond_logdet_torch = added_diag._preconditioner()
     if precondition:
@@ -152,7 +160,14 @@ def assert_logdet(
     )
 
     rerr = test_modules.rel_error_scaler(np.array(logdet_term), logdet)
-    print(f"logdet: {rerr:.2e}\n")
+    print(f"logdet torch: {np.array(logdet_term)}")
+    print(f"logdet our imp.: {logdet}")
+    L = jnp.linalg.cholesky(K)
+    logdet_linalg = jnp.sum(jnp.log(jnp.diag(L))) * 2
+    print(f"logdet linalg: {logdet_linalg}\n")
+    print(f"rerr w.r.t torch: {rerr:.2e}")
+    rerr_linalg = test_modules.rel_error_scaler(logdet_linalg, logdet)
+    print(f"rerr w.r.t linalg: {rerr_linalg:.2e}\n\n")
     assert rerr < rtol
 
 
@@ -186,6 +201,19 @@ def test_logdet_random_50():
     max_cg_iterations = 1000
     max_tridiag_iter = 20
     cg_tolerance = 1.0
+    assert_logdet(
+        N, noise, rank, n_tridiag, max_cg_iterations, max_tridiag_iter, cg_tolerance
+    )
+
+
+def test_logdet_random_1000():
+    N = 1000
+    noise = 1e-06
+    rank = 15
+    n_tridiag = 10
+    max_cg_iterations = 1000
+    max_tridiag_iter = 20
+    cg_tolerance = 0.01
     assert_logdet(
         N, noise, rank, n_tridiag, max_cg_iterations, max_tridiag_iter, cg_tolerance
     )
