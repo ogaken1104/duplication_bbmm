@@ -4,6 +4,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+import linear_operator
+
 
 def generate_K(N, seed=0, noise=1e-06):
     """
@@ -30,7 +32,7 @@ def is_positive_definite(matrix):
 
 def check_cond(matrix):
     cond_num = jnp.linalg.cond(matrix)
-    print(f"{cond_num:.2e}")
+    print(f"cond. #: {cond_num:.2e}")
     return cond_num
 
 
@@ -56,3 +58,20 @@ def check_cholesky_inverse_accuracy(K):
     I_reconstructed /= len(K)
     res = jnp.sum(jnp.linalg.norm(I_reconstructed, axis=0))
     print(res)
+
+
+def set_linear_operator_settings(kwargs_setup_loss):
+    linear_operator.settings.cg_tolerance._set_value(kwargs_setup_loss["max_iter_cg"])
+    linear_operator.settings.min_preconditioning_size._set_value(
+        kwargs_setup_loss["min_preconditioning_size"]
+    )
+    linear_operator.settings.cg_tolerance._set_value(kwargs_setup_loss["cg_tolerance"])
+    linear_operator.settings.num_trace_samples._set_value(
+        kwargs_setup_loss["n_tridiag"]
+    )
+    linear_operator.settings.max_lanczos_quadrature_iterations._set_value(
+        kwargs_setup_loss["max_tridiag_iter"]
+    )
+    linear_operator.settings.max_preconditioner_size._set_value(
+        kwargs_setup_loss["rank"]
+    )
