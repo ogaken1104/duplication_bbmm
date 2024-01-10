@@ -1,22 +1,6 @@
 import jax.numpy as jnp
 
-from bbmm.operators._linear_operator import LinearOp
-from bbmm.operators.diag_linear_operator import DiagLinearOp
-from bbmm.operators.root_linear_operator import RootLinearOp
-
-
-class SumLinearOp(LinearOp):
-    def __init__(self, *linear_ops):
-        self.linear_ops = linear_ops
-
-    def matmul(
-        self,
-        rhs: jnp.ndarray,
-    ) -> jnp.ndarray:
-        return sum(linear_op.matmul(rhs) for linear_op in self.linear_ops)
-
-    def _diagonal(self):
-        return sum(linear_op._diagonal() for linear_op in self.linear_ops)
+from bbmm.operators.sum_linear_operator import SumLinearOp
 
 
 class PsdSumLinearOp(SumLinearOp):
