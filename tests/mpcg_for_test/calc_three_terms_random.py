@@ -162,9 +162,9 @@ def calc_three_terms_random(
     I = jnp.eye(len(y))
     Kinv = jnp.linalg.solve(L.T, jnp.linalg.solve(L, I))
     trace = calc_trace.calc_trace(
-        Kinvy[:, :-1] * zs_norms,
+        Kinvy[:, :-1],
         dKdtheta,
-        zs * zs_norms,
+        zs,
         n_tridiag=n_tridiag,
         precondition=precondition,
     )

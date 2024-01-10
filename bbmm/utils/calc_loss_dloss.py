@@ -22,6 +22,7 @@ def setup_loss_dloss_mpcg(
     min_preconditioning_size=2000,
     max_iter_cg=1000,
     gp_model=None,
+    return_yKinvy=False,
 ):
     def loss_dloss_mpcg(init, *args):
         ## this part can be changed when K is LinearOp ##
@@ -132,6 +133,8 @@ def setup_loss_dloss_mpcg(
         else:
             PinvdPz = jnp.zeros_like(zs)
 
+        if return_yKinvy:
+            yKdKKy_array = jnp.zeros(len(init))
         for i, dK in enumerate(dKdtheta):
             ## for large cond. # covariance, usually not reach convergence here.
             KinvdKz, j = cg.mpcg_bbmm(
@@ -153,11 +156,21 @@ def setup_loss_dloss_mpcg(
                 tau = gamma_sum
 
             yKdKKy = Kinvy[:, -1].T @ dK @ Kinvy[:, -1]
+            if return_yKinvy:
+                yKdKKy_array = yKdKKy_array.at[i].set(yKdKKy)
             dloss_i = (-yKdKKy + tau) / 2
             dloss = dloss.at[i].set(dloss_i)
         # add derivative of jeffery's prior
         dloss += 1.0
         # print(dloss)
-        return loss / gp_model.sec_tr[-1], dloss / gp_model.sec_tr[-1]
+        if return_yKinvy:
+            return (
+                loss / gp_model.sec_tr[-1],
+                dloss / gp_model.sec_tr[-1],
+                yKy,
+                yKdKKy_array,
+            )
+        else:
+            return loss / gp_model.sec_tr[-1], dloss / gp_model.sec_tr[-1]
 
     return loss_dloss_mpcg

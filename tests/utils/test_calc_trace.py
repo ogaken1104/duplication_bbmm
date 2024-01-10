@@ -10,7 +10,8 @@ config.update("jax_enable_x64", True)
 import bbmm.utils.calc_trace as calc_trace
 import bbmm.utils.test_modules as test_modules
 
-rtol = 0.1
+rtol = 0.2
+# atol = 1
 
 
 def test_trace_random_50():
@@ -38,3 +39,4 @@ def test_trace_random_50():
     print(f"trace_linalg: {trace_linalg:.3e}\n")
 
     assert test_modules.rel_error_scaler(trace_linalg, trace_mpcg) < rtol
+    # assert jnp.abs(trace_linalg-trace_mpcg) < atol

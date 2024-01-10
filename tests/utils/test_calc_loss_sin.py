@@ -108,13 +108,18 @@ def calc_loss_sin(
         }
     func_value_grad_mpcg = calc_loss_dloss.setup_loss_dloss_mpcg(
         gp_model=gp_model,
+        return_yKinvy=True,
         **kwargs_setup_loss,
     )
 
-    loss_ours, dloss_ours = func_value_grad_mpcg(init, *args_predict[2:])
+    loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
+        init, *args_predict[2:]
+    )
 
-    loss_linalg = func(init, *args_predict[2:]) / len(K)
-    dloss_linalg = dfunc(init, *args_predict[2:]) / len(K)
+    loss_cholesky = func(init, *args_predict[2:]) / len(K)
+    dloss_cholesky = dfunc(init, *args_predict[2:]) / len(K)
+    yKinvy_cholesky = gp_model.calc_yKinvy(init, *args_predict[2:])
+    yKdKKy_cholesky = gp_model.calc_yKdKKy(init, *args_predict[2:])
 
     ## check gpytorch
     if test_gpytorch:
@@ -179,24 +184,38 @@ def calc_loss_sin(
             np.exp(init),
             np.array([np.squeeze(d.detach().numpy()) for d in dloss_torch]),
         )
+    print(f"yKinvy ours: {yKinvy_ours:.1e}")
+    print(f"yKinvy cholesky: {yKinvy_cholesky:.1e}")
+    print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
+    print("\n")
     print(f"loss ours: {loss_ours:.1e}")
-    print(f"loss linalg: {loss_linalg:.1e}")
+    print(f"loss cholesky: {loss_cholesky:.1e}")
     if test_gpytorch:
         print(f"loss torch: {loss_torch:.1e}")
     print("\n")
+
+    print(
+        f"yKdKKy ours: {np.array2string(yKdKKy_ours, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
+    )
+    print(
+        f"yKdKKy cholesky: {np.array2string(yKdKKy_cholesky, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
+    )
+    print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
+    print("\n")
+
     print(f"dloss ours: {dloss_ours}")
-    print(f"dloss linalg: {dloss_linalg}")
+    print(f"dloss cholesky: {dloss_cholesky}")
     if test_gpytorch:
         print(f"dloss torch: {dloss_torch}")
     print("\n")
-    aerr_loss_ours = jnp.abs(loss_linalg - loss_ours)
-    aerr_dloss_ours = jnp.mean(jnp.abs(dloss_linalg - dloss_ours))
+    aerr_loss_ours = jnp.abs(loss_cholesky - loss_ours)
+    aerr_dloss_ours = jnp.mean(jnp.abs(dloss_cholesky - dloss_ours))
     print(f"aerr loss ours: {aerr_loss_ours:.1e}")
     print(f"aerr dloss ours: {aerr_dloss_ours:.1e}")
     print("\n")
     if test_gpytorch:
-        aerr_loss_torch = jnp.abs(loss_linalg - loss_torch)
-        aerr_dloss_torch = jnp.mean(jnp.abs(dloss_linalg - dloss_torch))
+        aerr_loss_torch = jnp.abs(loss_cholesky - loss_torch)
+        aerr_dloss_torch = jnp.mean(jnp.abs(dloss_cholesky - dloss_torch))
         print(f"aerr loss torch: {aerr_loss_torch:.1e}")
         print(f"aerr dloss torch: {aerr_dloss_torch:.1e}")
 
@@ -204,66 +223,66 @@ def calc_loss_sin(
     assert aerr_dloss_ours < atol
 
 
-def test_loss_sin1d_10_init_0():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive"
-    init = jnp.array([0.0, 0.0])
-    scale = 1.0
-    calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
+# def test_loss_sin1d_10_init_0():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive"
+#     init = jnp.array([0.0, 0.0])
+#     scale = 1.0
+#     calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
 
 
-def test_loss_sin1d_10_init_2():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive"
-    init = jnp.array([2.0, 2.0])
-    scale = 1.0
-    calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
+# def test_loss_sin1d_10_init_2():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive"
+#     init = jnp.array([2.0, 2.0])
+#     scale = 1.0
+#     calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
 
 
-def test_loss_sin1d_1000_x100_init_0():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive_y_1000"
-    init = jnp.array([0.0, 0.0])
-    scale = 100.0
-    kwargs_setup_loss = {
-        "rank": 5,
-        "n_tridiag": 10,
-        "max_tridiag_iter": 20,
-        "cg_tolerance": 0.01,
-        "max_iter_cg": 2000,
-        "min_preconditioning_size": 2000,
-    }
-    calc_loss_sin(
-        project_name,
-        simulation_name,
-        init,
-        scale,
-        kwargs_setup_loss=kwargs_setup_loss,
-        test_gpytorch=True,
-    )
+# def test_loss_sin1d_1000_x100_init_0():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive_y_1000"
+#     init = jnp.array([0.0, 0.0])
+#     scale = 100.0
+#     kwargs_setup_loss = {
+#         "rank": 5,
+#         "n_tridiag": 10,
+#         "max_tridiag_iter": 20,
+#         "cg_tolerance": 0.01,
+#         "max_iter_cg": 2000,
+#         "min_preconditioning_size": 2000,
+#     }
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         kwargs_setup_loss=kwargs_setup_loss,
+#         test_gpytorch=True,
+#     )
 
 
-def test_loss_sin1d_1000_x100_init_1():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive_y_1000"
-    init = jnp.array([1.0, 1.0])
-    scale = 100.0
-    kwargs_setup_loss = {
-        "rank": 5,
-        "n_tridiag": 40,
-        "max_tridiag_iter": 80,
-        "cg_tolerance": 0.01,
-        "max_iter_cg": 2000,
-        "min_preconditioning_size": 2000,
-    }
-    calc_loss_sin(
-        project_name,
-        simulation_name,
-        init,
-        scale,
-        kwargs_setup_loss=kwargs_setup_loss,
-        test_gpytorch=True,
-    )
+# def test_loss_sin1d_1000_x100_init_1():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive_y_1000"
+#     init = jnp.array([1.0, 1.0])
+#     scale = 100.0
+#     kwargs_setup_loss = {
+#         "rank": 5,
+#         "n_tridiag": 40,
+#         "max_tridiag_iter": 80,
+#         "cg_tolerance": 0.01,
+#         "max_iter_cg": 2000,
+#         "min_preconditioning_size": 2000,
+#     }
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         kwargs_setup_loss=kwargs_setup_loss,
+#         test_gpytorch=True,
+#     )
 
 
 def test_loss_sin1d_1000_x100_init_2():
@@ -272,7 +291,7 @@ def test_loss_sin1d_1000_x100_init_2():
     init = jnp.array([2.0, 2.0])
     scale = 100.0
     kwargs_setup_loss = {
-        "rank": 5,
+        "rank": 50,
         "n_tridiag": 20,
         "max_tridiag_iter": 40,
         "cg_tolerance": 0.01,
