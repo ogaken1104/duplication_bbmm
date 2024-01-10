@@ -118,8 +118,8 @@ def calc_loss_sin(
 
     loss_cholesky = func(init, *args_predict[2:]) / len(K)
     dloss_cholesky = dfunc(init, *args_predict[2:]) / len(K)
-    yKinvy_cholesky = gp_model.calc_yKinvy(init, *args_predict[2:])
-    yKdKKy_cholesky = gp_model.calc_yKdKKy(init, *args_predict[2:])
+    yKinvy_cholesky = gp_model._calc_yKinvy(init, *args_predict[2:])
+    yKdKKy_cholesky = gp_model._calc_yKdKKy(init, *args_predict[2:])
 
     ## check gpytorch
     if test_gpytorch:
