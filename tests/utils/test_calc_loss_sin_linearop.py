@@ -11,7 +11,7 @@ import warnings
 
 warnings.filterwarnings("always")
 
-from bbmm.utils import calc_loss_dloss, test_modules
+from bbmm.utils import calc_loss_dloss_linearop, test_modules
 
 import gpytorch
 import torch
@@ -106,7 +106,7 @@ def calc_loss_sin(
             "max_iter_cg": 1000,
             "min_preconditioning_size": 2000,
         }
-    func_value_grad_mpcg = calc_loss_dloss.setup_loss_dloss_mpcg(
+    func_value_grad_mpcg = calc_loss_dloss_linearop.setup_loss_dloss_mpcg(
         gp_model=gp_model,
         return_yKinvy=True,
         **kwargs_setup_loss,

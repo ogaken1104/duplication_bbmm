@@ -26,7 +26,7 @@ def setup_preconditioner(
     - added_diag_linear_operator.py
     https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/operators/added_diag_linear_operator.py#L4
     """
-    if len(matrix) < min_preconditioning_size:
+    if matrix.shape[0] < min_preconditioning_size:
         return None, None, None
     if rank is None:
         piv_chol_self = func_pivoted_cholesky(matrix)
