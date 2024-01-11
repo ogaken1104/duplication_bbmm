@@ -23,6 +23,7 @@ import bbmm.utils.calc_logdet as calc_logdet
 import bbmm.utils.calc_trace as calc_trace
 import bbmm.utils.conjugate_gradient as cg
 import bbmm.utils.preconditioner as precond
+from bbmm.operators.dense_linear_operator import DenseLinearOp
 
 config.update("jax_enable_x64", True)
 
@@ -78,6 +79,7 @@ def calc_three_terms_random(
     max_iter_cg: int = 1000,
     tolerance: float = 0.01,
     max_tridiag_iter: int = 20,
+    use_linear_op: bool = False,
 ):
     N = 100
 
@@ -92,6 +94,10 @@ def calc_three_terms_random(
 
     ## calc deriative of covariance matrix
     dKdtheta = generate_K(N, seed=1)
+
+    if use_linear_op:
+        K = DenseLinearOp(K)
+        dKdtheta = DenseLinearOp(dKdtheta)
 
     ## calc linear solve
     time_start_linear_solve = time.time()
@@ -140,10 +146,10 @@ def calc_three_terms_random(
     print(f"prec time: {time_end_precondition - time_start_linear_solve:.3f}")
     print(f"cg   time: {time_end_mpcg - time_start_mpcg:.3f}")
     print(f"cg   iter: {j}\n")
+    # linear_solve_rel_error = jnp.mean((Kinvy[:, -1] - Kinvy_linalg) / Kinvy_linalg)
     L = jnp.linalg.cholesky(K)
     v = jnp.linalg.solve(L, rhs)
     Kinvy_linalg = jnp.linalg.solve(L.T, v)
-    # linear_solve_rel_error = jnp.mean((Kinvy[:, -1] - Kinvy_linalg) / Kinvy_linalg)
     linear_solve_rel_error = jnp.mean(rel_error(Kinvy_linalg, Kinvy))
 
     ## calc by logdet

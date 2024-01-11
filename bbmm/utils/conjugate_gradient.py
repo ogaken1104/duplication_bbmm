@@ -7,10 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit, lax, vmap
 
-# class IdentityPreconditioner:
-#     def precondition(self, residual: jnp.array):
-#         return residual
-# warnings.filterwarnings("always")
+from bbmm.operators._linear_operator import LinearOp
 
 
 def precondition_identity(residual: jnp.array):
@@ -33,7 +30,7 @@ def less_than_for_arr(arr: jnp.array, bool_less_than: jnp.array, eps: float = 1.
 
 
 def mpcg_bbmm(
-    A: jnp.ndarray,
+    A: Union[jnp.ndarray, LinearOp],
     rhs: jnp.ndarray,
     precondition: Optional[Callable] = None,
     max_iter_cg: int = 1000,
@@ -42,11 +39,10 @@ def mpcg_bbmm(
     eps: float = 1e-10,
     n_tridiag: int = 10,
     max_tridiag_iter: int = 20,
-    return_iter_cg: bool = False,
+    # return_iter_cg: bool = False,
     stop_updating_after: float = 1e-10,
 ) -> Tuple[jnp.ndarray, ...]:
-    """
-    function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A.
+    """function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A. (Gardner et al, 2018 https://arxiv.org/abs/1809.11165)
 
     Implements the linear conjugate gradients method for (approximately) solving systems of the form
 
@@ -57,18 +53,18 @@ def mpcg_bbmm(
     Solve
 
     Args:
-        - A: matrix represents lhs
-        - rhs: matrix represents rhs, which is comprised of [probe_vectors, y]
-        - max_iter_cg: maximum number of iteration for conjugate gradient
-        - tolerance: l2 norm tolerance for residual
-        - print_process: if print optimization detail at each step
-        - eps: norm less than this is considered to be 0
-        - n_tridiag: number of the first columns of rhs to be tridiagonalized (number of probe vectors)
-        - n_tridiag_iter: maximum size of the tridiagonalization matrix
+        - A (jnp.ndarray or LinearOp): matrix represents lhs
+        - rhs (jnp.ndarray): matrix represents rhs, which is comprised of [probe_vectors, y]
+        - max_iter_cg (int): maximum number of iteration for conjugate gradient
+        - tolerance (float): l2 norm tolerance for residual
+        - print_process (bool): if print optimization detail at each step
+        - eps (float): norm less than this is considered to be 0
+        - n_tridiag (int): number of the first columns of rhs to be tridiagonalized (number of probe vectors)
+        - max_tridiag_iter (int): maximum size of the tridiagonalization matrix
 
     Returns:
-        - u: result of solving the eq. the leftmost columns is K^{-1}y
-        - t_mat: corresponding tridiagonal matrices (if n_tridiag > 0)
+        - u (jnp.ndarray): result of solving the eq. the leftmost columns is K^{-1}y
+        - t_mat (jnp.ndarray): corresponding tridiagonal matrices (if n_tridiag > 0)
     """
     if not precondition:
         precondition = precondition_identity
@@ -88,7 +84,11 @@ def mpcg_bbmm(
     rhs_norm = lax.select(rhs_is_zero, jnp.ones(len(rhs_norm)), rhs_norm)
     rhs = rhs / rhs_norm
 
-    r0 = rhs - jnp.matmul(A, u)  ## current residual
+    ## current residual
+    if isinstance(A, LinearOp):
+        r0 = rhs - A.matmul(u)
+    else:
+        r0 = rhs - jnp.matmul(A, u)
 
     # Sometime we're lucky and the preconditioner solves the system right away
     # Check for convergence
@@ -112,12 +112,15 @@ def mpcg_bbmm(
     ## our own implementation
     is_zero = jnp.full(r0.shape[1], False)
 
-    @partial(jit, static_argnames=["n_tridiag"])
-    def linear_cg_updates(A, d, r0, z0, u, n_tridiag, is_zero):
+    # @partial(jit, static_argnames=["A", "n_tridiag"])  # is making A static OK?
+    def _linear_cg_updates(A, d, r0, z0, u, n_tridiag, is_zero):
         zeros_num_rhs = jnp.zeros(r0.shape[1])
         ones_num_rhs = jnp.ones(r0.shape[1])
 
-        v = jnp.dot(A, d)
+        if isinstance(A, LinearOp):
+            v = A.matmul(d)
+        else:
+            v = jnp.dot(A, d)
         # alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)
         alpha = jnp.multiply(d, v)
         alpha = jnp.sum(alpha, axis=0)
@@ -149,6 +152,11 @@ def mpcg_bbmm(
             return d, r1, z1, u, alpha_tridiag, beta_tridiag, is_zero
         else:
             return d, r1, z1, u, is_zero
+
+    if isinstance(A, LinearOp):
+        linear_cg_updates = jit(_linear_cg_updates, static_argnames=["A", "n_tridiag"])
+    else:
+        linear_cg_updates = jit(_linear_cg_updates, static_argnames=["n_tridiag"])
 
     for j in range(max_iter_cg):
         if n_tridiag:
