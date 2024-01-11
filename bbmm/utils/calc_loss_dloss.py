@@ -66,12 +66,15 @@ def setup_loss_dloss_mpcg(
         loss += jnp.sum(init)
 
         ## calc dloss
-        def calc_trainingK(theta):
-            Σ = gp_model.trainingK_all(theta, r)
-            Σ = gp_model.add_eps_to_sigma(Σ, noise, noise_parameter=None)
-            return Σ
+        # def calc_trainingK(theta):
+        #     Σ = gp_model.trainingK_all(theta, r)
+        #     Σ = gp_model.add_eps_to_sigma(Σ, noise, noise_parameter=None)
+        #     return Σ
 
-        dKdtheta = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
+        # dKdtheta = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
+        gp_model.setup_Ks_dKdtheta()
+        dKdtheta = gp_model.calc_dKdtheta(init, r)
+        dKdtheta = jnp.transpose(dKdtheta, (2, 0, 1))
         dloss = jnp.zeros(len(init))
 
         ## calc tr(P^{-1}\frac{dP}{dtheta}) beforehand
