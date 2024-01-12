@@ -14,6 +14,7 @@ import bbmm.utils.preconditioner as precond
 from bbmm.operators.dense_linear_operator import DenseLinearOp
 from bbmm.operators.diag_linear_operator import DiagLinearOp
 from bbmm.operators.added_diag_linear_operator import AddedDiagLinearOp
+from bbmm.opeartors.lazy_evaluated_kernel_matrix import LazyEvaluatedKernelMatrix
 
 
 def setup_loss_dloss_mpcg(
@@ -26,13 +27,24 @@ def setup_loss_dloss_mpcg(
     max_iter_cg=1000,
     gp_model=None,
     return_yKinvy=False,
+    use_lazy_matrix=False,
 ):
     def loss_dloss_mpcg(init, *args):
         ## this part can be changed when K is LinearOp ##
         r, delta_y, noise = args
 
-        _K = gp_model.trainingK_all(init, r)
-        _K_linear_op = DenseLinearOp(_K)
+        if use_lazy_matrix:
+            _K_linear_op = LazyEvaluatedKernelMatrix(
+                r1s=r,
+                r2s=r,
+                Kss=gp_model.trainingKs,
+                sec1=gp_model.sec_tr,
+                sec2=gp_model.sec_tr,
+                jiggle=False,
+            )
+        else:
+            _K = gp_model.trainingK_all(init, r)
+            _K_linear_op = DenseLinearOp(_K)
         K_linear_op = AddedDiagLinearOp(
             _K_linear_op, DiagLinearOp(jnp.full(len(_K), noise))
         )

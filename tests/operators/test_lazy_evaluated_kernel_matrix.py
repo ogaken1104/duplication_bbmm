@@ -3,6 +3,8 @@ import jax.numpy as jnp
 import numpy as np
 import stopro.GP.gp_sinusoidal_independent as gp_sinusoidal_independent
 from jax.config import config
+from jax import jit
+import time
 from stopro.data_handler.data_handle_module import HdfOperator
 from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.load_modules import load_data, load_params
@@ -103,7 +105,7 @@ def test_lazy_evaluated_kernel_matrix(
         lazy_evaluated_kernel_matrix[jnp.array([1, 0])] == K[jnp.array([1, 0])]
     )
 
-    ## also check when using AddedDiagLinearOperator
+    ### check when using AddedDiagLinearOperator
     lazy_evaluated_kernel_matrix = LazyEvaluatedKernelMatrix(
         r1s=r_train,
         r2s=r_train,
@@ -123,3 +125,40 @@ def test_lazy_evaluated_kernel_matrix(
     # assert jnp.all(
     #     added_diag[jnp.array([1, 0])] == K[jnp.array([1, 0])]
     # )
+
+    ### check derivative
+    gp_model.setup_Ks_dKdtheta()
+    dKss = gp_model.Ks_dKdtheta.copy()
+    for i in range(len(dKss)):
+        for j in list(range(len(dKss) - len(dKss[i])))[::-1]:
+            dKss[i] = [dKss[j][i]] + dKss[i]
+    lazy_evaluated_kernel_matrix_derivative = LazyEvaluatedKernelMatrix(
+        r1s=r_train,
+        r2s=r_train,
+        Kss=dKss,
+        sec1=gp_model.sec_tr,
+        sec2=gp_model.sec_tr,
+        jiggle=None,
+        calc_derivative=True,
+        num_component=len(init),
+    )
+    lazy_evaluated_kernel_matrix_derivative.set_theta(init)
+    matmul = jit(lazy_evaluated_kernel_matrix_derivative.matmul)
+    dK_x_right_matrix = jnp.transpose(matmul(rhs=right_matrix), (2, 0, 1))
+    start_time = time.time()
+    dK_x_right_matrix = jnp.transpose(matmul(rhs=right_matrix), (2, 0, 1))
+    # dK_x_right_matrix = jnp.transpose(
+    #     lazy_evaluated_kernel_matrix_derivative.matmul(rhs=right_matrix), (2, 0, 1)
+    # )
+    end_time = time.time()
+    print(f"elapsed time for derivative: {end_time - start_time}")
+
+    def calc_trainingK(theta):
+        Σ = gp_model.trainingK_all(theta, r_train)
+        Σ = gp_model.add_eps_to_sigma(Σ, params_model["epsilon"], noise_parameter=None)
+        return Σ
+
+    dK_naive = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
+    dK_x_right_matrix_naive = jnp.einsum("ijk, kl->ijl", dK_naive, right_matrix)
+
+    assert jnp.allclose(dK_x_right_matrix_naive, np.array(dK_x_right_matrix))

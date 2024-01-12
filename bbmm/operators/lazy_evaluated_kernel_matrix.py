@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import lax
+from jax import jit, lax
 
 from bbmm.operators._linear_operator import LinearOp
 
@@ -9,7 +9,9 @@ class LazyEvaluatedKernelMatrix(LinearOp):
     refer to gpytroch.lazy.lazy_evaluated_kernel_tensor
     """
 
-    def __init__(self, r1s, r2s, Kss, sec1, sec2, jiggle) -> None:
+    def __init__(
+        self, r1s, r2s, Kss, sec1, sec2, jiggle, calc_derivative=None, num_component=1
+    ) -> None:
         self.r1s = r1s
         self.r2s = r2s
         self.Kss = Kss
@@ -17,6 +19,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         self.sec2 = sec2
         self.jiggle = jiggle
         self.theta = None
+        self.num_component = num_component
 
     @property
     def shape(self) -> tuple[int]:
@@ -56,7 +59,10 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             Returns:
                 K_row: jnp.array
             """
-            K_row = jnp.zeros(self.sec2[-1])
+            if self.num_component == 1:
+                K_row = jnp.zeros(self.sec2[-1])
+            else:
+                K_row = jnp.zeros((self.sec2[-1], self.num_component))
             for j in range(len(self.sec2) - 1):
                 if j >= sec1_index:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
@@ -72,12 +78,17 @@ class LazyEvaluatedKernelMatrix(LinearOp):
 
     def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         ## 解のarrayを確保
-        res = jnp.zeros_like(rhs)
+        if self.num_component == 1:
+            res = jnp.zeros_like(rhs)
+        else:
+            res = jnp.zeros((*rhs.shape, self.num_component))
+
         for k in range(len(self.sec1[:-1])):
             r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
             index_scan = jnp.arange(self.sec1[k], self.sec1[k + 1])
             calc_K_row = self.setup_calc_K_row(k, self.Kss[k])
 
+            @jit
             def calc_vmm(res, xs):
                 """
                 function to calculate vector-matrix multiplication K(r1, ) x right_matrix
@@ -86,7 +97,13 @@ class LazyEvaluatedKernelMatrix(LinearOp):
                 K_row = calc_K_row(r1)
                 if self.jiggle:
                     K_row = K_row.at[i].add(self.jiggle)
-                res = res.at[i, :].set(jnp.matmul(K_row, rhs))
+                if self.num_component == 1:
+                    res = res.at[i, :].set(jnp.matmul(K_row, rhs))
+                else:
+                    res = res.at[i, :].set(
+                        jnp.transpose(jnp.matmul(jnp.transpose(K_row), rhs))
+                    )
+
                 return res, None
 
             ## calculate vmm for each row
