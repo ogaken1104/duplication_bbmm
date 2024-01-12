@@ -16,10 +16,14 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         self.sec1 = sec1
         self.sec2 = sec2
         self.jiggle = jiggle
+        self.theta = None
 
     @property
     def shape(self) -> tuple[int]:
         return self.sec1[-1], self.sec2[-1]
+
+    def set_theta(self, theta: jnp.ndarray) -> None:
+        self.theta = theta
 
     def _diagonal(self) -> jnp.array:
         """
@@ -34,7 +38,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
 
             def calc_K_component(res, xs):
                 i, r1 = xs
-                res = res.at[i].set(jnp.squeeze(K(r1, r1)))
+                res = res.at[i].set(jnp.squeeze(K(r1, r1, self.theta)))
                 return res, None
 
             ## calculate vmm for each row
@@ -56,11 +60,11 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             for j in range(len(self.sec2) - 1):
                 if j >= sec1_index:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
-                        jnp.squeeze(Ks[j](r1, self.r2s[j]))
+                        jnp.squeeze(Ks[j](r1, self.r2s[j], self.theta))
                     )
                 else:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
-                        jnp.squeeze(Ks[j](self.r2s[j], r1))
+                        jnp.squeeze(Ks[j](self.r2s[j], r1, self.theta))
                     )
             return K_row
 

@@ -8,6 +8,8 @@ from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.load_modules import load_data, load_params
 
 from bbmm.operators.lazy_evaluated_kernel_matrix import LazyEvaluatedKernelMatrix
+from bbmm.operators.added_diag_linear_operator import AddedDiagLinearOp
+from bbmm.operators.diag_linear_operator import DiagLinearOp
 
 config.update("jax_enable_x64", True)
 
@@ -62,7 +64,7 @@ def test_lazy_evaluated_kernel_matrix(
         ]
     )
 
-    Kss = gp_model.trainingKs(init)
+    Kss = gp_model.trainingKs.copy()
     for i in range(len(Kss)):
         for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
             Kss[i] = [Kss[j][i]] + Kss[i]
@@ -79,6 +81,7 @@ def test_lazy_evaluated_kernel_matrix(
         sec2=gp_model.sec_tr,
         jiggle=params_model["epsilon"],
     )
+    lazy_evaluated_kernel_matrix.set_theta(init)
 
     assert lazy_evaluated_kernel_matrix.shape == (
         gp_model.sec_tr[-1],
@@ -99,3 +102,24 @@ def test_lazy_evaluated_kernel_matrix(
     assert jnp.all(
         lazy_evaluated_kernel_matrix[jnp.array([1, 0])] == K[jnp.array([1, 0])]
     )
+
+    ## also check when using AddedDiagLinearOperator
+    lazy_evaluated_kernel_matrix = LazyEvaluatedKernelMatrix(
+        r1s=r_train,
+        r2s=r_train,
+        Kss=Kss,
+        sec1=gp_model.sec_tr,
+        sec2=gp_model.sec_tr,
+        jiggle=None,
+    )
+    lazy_evaluated_kernel_matrix.set_theta(init)
+    added_diag = AddedDiagLinearOp(
+        lazy_evaluated_kernel_matrix,
+        DiagLinearOp(jnp.full(gp_model.sec_tr[-1], params_model["epsilon"])),
+    )
+    K_x_right_matrix_added_diag = added_diag.matmul(rhs=right_matrix)
+    assert jnp.allclose(K_x_right_matrix_naive, K_x_right_matrix_added_diag)
+    # assert jnp.all(added_diag._diagonal() == jnp.diag(K))
+    # assert jnp.all(
+    #     added_diag[jnp.array([1, 0])] == K[jnp.array([1, 0])]
+    # )
