@@ -1,5 +1,10 @@
+"""
+TODO:
+    - implement efficient matmul calculation
+"""
 import jax.numpy as jnp
 from jax import jit, lax
+from functools import partial
 
 from bbmm.operators._linear_operator import LinearOp
 
@@ -28,6 +33,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
     def set_theta(self, theta: jnp.ndarray) -> None:
         self.theta = theta
 
+    @partial(jit, static_argnums=(0,))
     def _diagonal(self) -> jnp.array:
         """
         not efficient because we use lax.scan for each component. we cannot use broadcasting of numpy because each kerenl functions in Kss is "vmapped".
@@ -76,6 +82,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
 
         return calc_K_row
 
+    @partial(jit, static_argnums=(0,))
     def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
         ## 解のarrayを確保
         if self.num_component == 1:

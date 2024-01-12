@@ -15,6 +15,8 @@ from bbmm.operators.diag_linear_operator import DiagLinearOp
 
 config.update("jax_enable_x64", True)
 
+print("\n")
+
 
 def test_lazy_evaluated_kernel_matrix(
     simulation_path: str = "tests/data/sinusoidal_direct",
@@ -91,6 +93,10 @@ def test_lazy_evaluated_kernel_matrix(
     )
 
     K_x_right_matrix = lazy_evaluated_kernel_matrix.matmul(rhs=right_matrix)
+    start_time = time.time()
+    K_x_right_matrix = lazy_evaluated_kernel_matrix.matmul(rhs=right_matrix)
+    end_time = time.time()
+    print(f"elapsed time for trainingKs: {end_time - start_time:.4f}")
 
     K = gp_model.trainingK_all(init, r_train)
     K = gp_model.add_eps_to_sigma(K, params_model["epsilon"], noise_parameter=None)
@@ -143,15 +149,15 @@ def test_lazy_evaluated_kernel_matrix(
         num_component=len(init),
     )
     lazy_evaluated_kernel_matrix_derivative.set_theta(init)
-    matmul = jit(lazy_evaluated_kernel_matrix_derivative.matmul)
-    dK_x_right_matrix = jnp.transpose(matmul(rhs=right_matrix), (2, 0, 1))
+    dK_x_right_matrix = jnp.transpose(
+        lazy_evaluated_kernel_matrix_derivative.matmul(rhs=right_matrix), (2, 0, 1)
+    )
     start_time = time.time()
-    dK_x_right_matrix = jnp.transpose(matmul(rhs=right_matrix), (2, 0, 1))
-    # dK_x_right_matrix = jnp.transpose(
-    #     lazy_evaluated_kernel_matrix_derivative.matmul(rhs=right_matrix), (2, 0, 1)
-    # )
+    dK_x_right_matrix = jnp.transpose(
+        lazy_evaluated_kernel_matrix_derivative.matmul(rhs=right_matrix), (2, 0, 1)
+    )
     end_time = time.time()
-    print(f"elapsed time for derivative: {end_time - start_time}")
+    print(f"elapsed time for derivative: {end_time - start_time:.4f}")
 
     def calc_trainingK(theta):
         Σ = gp_model.trainingK_all(theta, r_train)

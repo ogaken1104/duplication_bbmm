@@ -14,7 +14,7 @@ import bbmm.utils.preconditioner as precond
 from bbmm.operators.dense_linear_operator import DenseLinearOp
 from bbmm.operators.diag_linear_operator import DiagLinearOp
 from bbmm.operators.added_diag_linear_operator import AddedDiagLinearOp
-from bbmm.opeartors.lazy_evaluated_kernel_matrix import LazyEvaluatedKernelMatrix
+from bbmm.operators.lazy_evaluated_kernel_matrix import LazyEvaluatedKernelMatrix
 
 
 def setup_loss_dloss_mpcg(
@@ -29,6 +29,17 @@ def setup_loss_dloss_mpcg(
     return_yKinvy=False,
     use_lazy_matrix=False,
 ):
+    if use_lazy_matrix:
+        Kss = gp_model.trainingKs.copy()
+        for i in range(len(Kss)):
+            for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
+                Kss[i] = [Kss[j][i]] + Kss[i]
+        gp_model.setup_Ks_dKdtheta()
+        dKss = gp_model.Ks_dKdtheta.copy()
+        for i in range(len(dKss)):
+            for j in list(range(len(dKss) - len(dKss[i])))[::-1]:
+                dKss[i] = [dKss[j][i]] + dKss[i]
+
     def loss_dloss_mpcg(init, *args):
         ## this part can be changed when K is LinearOp ##
         r, delta_y, noise = args
@@ -37,16 +48,17 @@ def setup_loss_dloss_mpcg(
             _K_linear_op = LazyEvaluatedKernelMatrix(
                 r1s=r,
                 r2s=r,
-                Kss=gp_model.trainingKs,
+                Kss=Kss,
                 sec1=gp_model.sec_tr,
                 sec2=gp_model.sec_tr,
                 jiggle=False,
             )
+            _K_linear_op.set_theta(init)
         else:
             _K = gp_model.trainingK_all(init, r)
             _K_linear_op = DenseLinearOp(_K)
         K_linear_op = AddedDiagLinearOp(
-            _K_linear_op, DiagLinearOp(jnp.full(len(_K), noise))
+            _K_linear_op, DiagLinearOp(jnp.full(_K_linear_op.shape[0], noise))
         )
         ######################################
 
@@ -85,15 +97,31 @@ def setup_loss_dloss_mpcg(
         loss += jnp.sum(init)
 
         ## calc dloss
-        def calc_trainingK(theta):
-            Σ = gp_model.trainingK_all(theta, r)
-            Σ = gp_model.add_eps_to_sigma(Σ, noise, noise_parameter=None)
-            return Σ
-
-        dKdtheta = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
         dKdtheta_linear_op = []
-        for dK in dKdtheta:
-            dKdtheta_linear_op.append(DenseLinearOp(dK))
+        if use_lazy_matrix:
+            lazy_kernel_derivative = LazyEvaluatedKernelMatrix(
+                r1s=r,
+                r2s=r,
+                Kss=dKss,
+                sec1=gp_model.sec_tr,
+                sec2=gp_model.sec_tr,
+                jiggle=False,
+                num_component=len(init),
+            )
+            lazy_kernel_derivative.set_theta(init)
+            dKzs_list = jnp.transpose(lazy_kernel_derivative.matmul(zs), (2, 0, 1))
+            dKKinvy_list = jnp.transpose(lazy_kernel_derivative.matmul(Kinvy[:, -1]))
+        else:
+
+            def calc_trainingK(theta):
+                Σ = gp_model.trainingK_all(theta, r)
+                Σ = gp_model.add_eps_to_sigma(Σ, noise, noise_parameter=None)
+                return Σ
+
+            dKdtheta = jnp.transpose(jax.jacfwd(calc_trainingK)(init), (2, 0, 1))
+            dKdtheta_linear_op = []
+            for dK in dKdtheta:
+                dKdtheta_linear_op.append(DenseLinearOp(dK))
         dloss = jnp.zeros(len(init))
 
         ## calc tr(P^{-1}\frac{dP}{dtheta}) beforehand
@@ -159,9 +187,13 @@ def setup_loss_dloss_mpcg(
 
         if return_yKinvy:
             yKdKKy_array = jnp.zeros(len(init))
-        for i, dK_linear_op in enumerate(dKdtheta_linear_op):
+        for i in range(len(init)):
             ## for large cond. # covariance, usually not reach convergence here.
-            dKzs = dK_linear_op.matmul(zs)
+            if use_lazy_matrix:
+                dKzs = dKzs_list[i]
+            else:
+                dK_linear_op = dKdtheta_linear_op[i]
+                dKzs = dK_linear_op.matmul(zs)
             KinvdKz, j = cg.mpcg_bbmm(
                 K_linear_op,
                 dKzs,
@@ -180,7 +212,11 @@ def setup_loss_dloss_mpcg(
             else:
                 tau = gamma_sum
 
-            yKdKKy = Kinvy[:, -1].T @ dK_linear_op.matmul(Kinvy[:, -1])
+            ## we have to modify here
+            if use_lazy_matrix:
+                yKdKKy = Kinvy[:, -1].T @ dKKinvy_list[i]
+            else:
+                yKdKKy = Kinvy[:, -1].T @ dK_linear_op.matmul(Kinvy[:, -1])
             if return_yKinvy:
                 yKdKKy_array = yKdKKy_array.at[i].set(yKdKKy)
             dloss_i = (-yKdKKy + tau) / 2
