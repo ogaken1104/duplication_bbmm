@@ -28,6 +28,7 @@ def setup_loss_dloss_mpcg(
     gp_model=None,
     return_yKinvy=False,
     use_lazy_matrix=False,
+    matmul_blockwise=False,
 ):
     if use_lazy_matrix:
         Kss = gp_model.trainingKs.copy()
@@ -52,6 +53,7 @@ def setup_loss_dloss_mpcg(
                 sec1=gp_model.sec_tr,
                 sec2=gp_model.sec_tr,
                 jiggle=False,
+                matmul_blockwise=matmul_blockwise,
             )
             _K_linear_op.set_theta(init)
         else:
@@ -107,6 +109,7 @@ def setup_loss_dloss_mpcg(
                 sec2=gp_model.sec_tr,
                 jiggle=False,
                 num_component=len(init),
+                matmul_blockwise=matmul_blockwise,
             )
             lazy_kernel_derivative.set_theta(init)
             dKzs_list = jnp.transpose(lazy_kernel_derivative.matmul(zs), (2, 0, 1))

@@ -1,6 +1,7 @@
 """
 TODO:
     - implement efficient matmul calculation
+        - simpler implemetation of blockwise matrix multiplication
 """
 import jax.numpy as jnp
 from jax import jit, lax
@@ -15,7 +16,16 @@ class LazyEvaluatedKernelMatrix(LinearOp):
     """
 
     def __init__(
-        self, r1s, r2s, Kss, sec1, sec2, jiggle, calc_derivative=None, num_component=1
+        self,
+        r1s,
+        r2s,
+        Kss,
+        sec1,
+        sec2,
+        jiggle,
+        calc_derivative=None,
+        num_component=1,
+        matmul_blockwise=False,
     ) -> None:
         self.r1s = r1s
         self.r2s = r2s
@@ -25,6 +35,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         self.jiggle = jiggle
         self.theta = None
         self.num_component = num_component
+        self.matmul_blockwise = matmul_blockwise
 
     @property
     def shape(self) -> tuple[int]:
@@ -90,31 +101,73 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         else:
             res = jnp.zeros((*rhs.shape, self.num_component))
 
-        for k in range(len(self.sec1[:-1])):
-            r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
-            index_scan = jnp.arange(self.sec1[k], self.sec1[k + 1])
-            calc_K_row = self.setup_calc_K_row(k, self.Kss[k])
-
-            @jit
-            def calc_vmm(res, xs):
-                """
-                function to calculate vector-matrix multiplication K(r1, ) x right_matrix
-                """
-                i, r1 = xs
-                K_row = calc_K_row(r1)
-                if self.jiggle:
-                    K_row = K_row.at[i].add(self.jiggle)
+        ## matmul with blockwise
+        if self.matmul_blockwise:
+            for i in range(len(self.sec1) - 1):
                 if self.num_component == 1:
-                    res = res.at[i, :].set(jnp.matmul(K_row, rhs))
-                else:
-                    res = res.at[i, :].set(
-                        jnp.transpose(jnp.matmul(jnp.transpose(K_row), rhs))
+                    K_block = jnp.zeros(
+                        (self.sec1[i + 1] - self.sec1[i], self.sec2[-1])
                     )
+                else:
+                    K_block = jnp.zeros(
+                        (
+                            self.sec1[i + 1] - self.sec1[i],
+                            self.sec2[-1],
+                            self.num_component,
+                        )
+                    )
+                for j in range(len(self.sec2) - 1):
+                    if j >= i:
+                        K_block = K_block.at[:, self.sec2[j] : self.sec2[j + 1]].set(
+                            self.Kss[i][j - i](self.r1s[i], self.r2s[j], self.theta)
+                        )
+                    else:
+                        K_block = K_block.at[:, self.sec2[j] : self.sec2[j + 1]].set(
+                            self.Kss[i][j](self.r2s[i], self.r1s[j], self.theta)
+                        )
+                if self.num_component == 1:
+                    res = res.at[self.sec1[i] : self.sec1[i + 1],].set(
+                        jnp.matmul(K_block, rhs)
+                    )
+                else:
+                    if rhs.ndim == 1:
+                        res = res.at[self.sec1[i] : self.sec1[i + 1],].set(
+                            jnp.matmul(jnp.transpose(K_block, (0, 2, 1)), rhs),
+                        )
+                    else:
+                        res = res.at[self.sec1[i] : self.sec1[i + 1],].set(
+                            jnp.transpose(
+                                jnp.matmul(jnp.transpose(K_block, (0, 2, 1)), rhs),
+                                (0, 2, 1),
+                            ),
+                        )
+        ## matmul with rowise
+        else:
+            for k in range(len(self.sec1[:-1])):
+                r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
+                index_scan = jnp.arange(self.sec1[k], self.sec1[k + 1])
+                calc_K_row = self.setup_calc_K_row(k, self.Kss[k])
 
-                return res, None
+                @jit
+                def calc_vmm(res, xs):
+                    """
+                    function to calculate vector-matrix multiplication K(r1, ) x right_matrix
+                    """
+                    i, r1 = xs
+                    K_row = calc_K_row(r1)
+                    if self.jiggle:
+                        K_row = K_row.at[i].add(self.jiggle)
+                    if self.num_component == 1:
+                        res = res.at[i, :].set(jnp.matmul(K_row, rhs))
+                    else:
+                        res = res.at[i, :].set(
+                            jnp.transpose(jnp.matmul(jnp.transpose(K_row), rhs))
+                        )
 
-            ## calculate vmm for each row
-            res, _ = lax.scan(calc_vmm, res, xs=(index_scan, r1s_k))
+                    return res, None
+
+                ## calculate vmm for each row
+                res, _ = lax.scan(calc_vmm, res, xs=(index_scan, r1s_k))
         return res
 
     ## TODO do matrix-matix multiplicatoin blockwise (this will work for not so many points)
