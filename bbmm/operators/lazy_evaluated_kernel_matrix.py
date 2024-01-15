@@ -119,7 +119,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
                 for j in range(len(self.sec2) - 1):
                     if j >= i:
                         K_block = K_block.at[:, self.sec2[j] : self.sec2[j + 1]].set(
-                            self.Kss[i][j - i](self.r1s[i], self.r2s[j], self.theta)
+                            self.Kss[i][j](self.r1s[i], self.r2s[j], self.theta)
                         )
                     else:
                         K_block = K_block.at[:, self.sec2[j] : self.sec2[j + 1]].set(

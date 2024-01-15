@@ -4,7 +4,10 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-import linear_operator
+try:
+    import linear_operator
+except:
+    pass
 
 
 def generate_K(N, seed=0, noise=1e-06):
