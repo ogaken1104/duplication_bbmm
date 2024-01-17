@@ -43,6 +43,7 @@ def setup_loss_dloss_mpcg(
                 dKss[i] = [dKss[j][i]] + dKss[i]
 
     def loss_dloss_mpcg(init, *args):
+        #################################################
         ## this part can be changed when K is LinearOp ##
         r, delta_y, noise = args
 
@@ -65,6 +66,7 @@ def setup_loss_dloss_mpcg(
         )
         ######################################
 
+        ## 1. setup preconditioner
         precondition, precond_lt, precond_logdet_cache = precond.setup_preconditioner(
             _K_linear_op,
             rank=rank,
@@ -72,6 +74,12 @@ def setup_loss_dloss_mpcg(
             min_preconditioning_size=min_preconditioning_size,
             # func_pivoted_cholesky=pc_jax.pivoted_cholesky_jax,
         )
+        # print(
+        #     f"precond_lt: {precond_lt.matmul(jax.random.normal(jax.random.PRNGKey(seed), (len(delta_y), n_tridiag)))[0]}"
+        # )
+        # print(f"precond_logdet_cache: {precond_logdet_cache}")
+
+        ## 2. generate random probe vectors
         if precondition:
             zs = precond_lt.zero_mean_mvn_samples(n_tridiag)
         else:
@@ -80,6 +88,7 @@ def setup_loss_dloss_mpcg(
         zs = zs / zs_norm
         rhs = jnp.concatenate([zs, delta_y.reshape(-1, 1)], axis=1)
 
+        ## 3. solve linear system Kx = rhs
         Kinvy, j, t_mat = cg.mpcg_bbmm(
             K_linear_op,
             rhs,
@@ -91,15 +100,16 @@ def setup_loss_dloss_mpcg(
             max_iter_cg=max_iter_cg,
         )
 
-        ## calc loss
+        ## 4. calc loss
         logdet = calc_logdet.calc_logdet(K_linear_op.shape, t_mat, precond_logdet_cache)
         yKy = jnp.dot(delta_y, Kinvy[:, -1])
         loss = (yKy + logdet) / 2 + len(delta_y) / 2 * jnp.log(jnp.pi * 2)
 
-        ## jeffery's prior
+        # add jeffery's prior
         loss += jnp.sum(init)
 
         ## calc dloss
+        ## 5. prepare dKdtheta linear_op
         dKdtheta_linear_op = []
         if use_lazy_matrix:
             lazy_kernel_derivative = LazyEvaluatedKernelMatrix(
@@ -128,11 +138,20 @@ def setup_loss_dloss_mpcg(
                 dKdtheta_linear_op.append(DenseLinearOp(dK))
         dloss = jnp.zeros(len(init))
 
-        ## calc tr(P^{-1}\frac{dP}{dtheta}) beforehand
+        ## 6. calc tr(P^{-1}\frac{dP}{dtheta}) beforehand
         if precondition:
 
-            def calc_Poperand(theta, operand, _K_linear_op=None):
+            def calc_Poperand(theta, operand):
                 if use_lazy_matrix:
+                    _K_linear_op = LazyEvaluatedKernelMatrix(
+                        r1s=r,
+                        r2s=r,
+                        Kss=Kss,
+                        sec1=gp_model.sec_tr,
+                        sec2=gp_model.sec_tr,
+                        jiggle=False,
+                        matmul_blockwise=matmul_blockwise,
+                    )
                     _K_linear_op.set_theta(theta)
                 else:
                     _K = gp_model.trainingK_all(theta, r)
@@ -146,13 +165,11 @@ def setup_loss_dloss_mpcg(
                 )
                 return precond_lt.matmul(operand)
 
-            if not use_lazy_matrix:
-                _K_linear_op = None
-            PinvdPz = jnp.transpose(
-                jax.jacfwd(calc_Poperand, 0)(init, zs, _K_linear_op), (2, 0, 1)
-            )
+            PinvdPz = jnp.transpose(jax.jacfwd(calc_Poperand, 0)(init, zs), (2, 0, 1))
+            # print(f"PinvdPz[0][0]: {PinvdPz[0][0]}")
             for i, _PinvdPz in enumerate(PinvdPz):
                 PinvdPz = PinvdPz.at[i].set(precondition(_PinvdPz))
+            # print(f"PinvdPz: {PinvdPz}")
             ##### directly calculate trace(P) but high computational cost #########
             # def calc_P(theta):
             #     K = gp_model.trainingK_all(theta, r)
@@ -171,8 +188,17 @@ def setup_loss_dloss_mpcg(
             #     jnp.diagonal(precondition(dP), axis1=-2, axis2=-1), axis=-1
             # )
             #######################################################
-            def diagonal_dP(theta, _K_linear_op):
+            def diagonal_dP(theta):
                 if use_lazy_matrix:
+                    _K_linear_op = LazyEvaluatedKernelMatrix(
+                        r1s=r,
+                        r2s=r,
+                        Kss=Kss,
+                        sec1=gp_model.sec_tr,
+                        sec2=gp_model.sec_tr,
+                        jiggle=False,
+                        matmul_blockwise=matmul_blockwise,
+                    )
                     _K_linear_op.set_theta(theta)
                 else:
                     _K = gp_model.trainingK_all(theta, r)
@@ -186,13 +212,10 @@ def setup_loss_dloss_mpcg(
                 )
                 return precond_lt._diagonal()
 
-            if not use_lazy_matrix:
-                _K_linear_op = None
-            diag_dP = jnp.transpose(jax.jacfwd(diagonal_dP)(init, _K_linear_op), (1, 0))
+            diag_dP = jnp.transpose(jax.jacfwd(diagonal_dP)(init), (1, 0))
+            # print(f"diag_dP: {diag_dP}")
             dPL = jnp.transpose(
-                jax.jacfwd(calc_Poperand, 0)(
-                    init, precond_lt.linear_ops[0].root.array, _K_linear_op
-                ),
+                jax.jacfwd(calc_Poperand, 0)(init, precond_lt.linear_ops[0].root.array),
                 (2, 0, 1),
             )
             left_term = precond_lt.left_term_of_trace()
@@ -200,6 +223,7 @@ def setup_loss_dloss_mpcg(
                 jnp.sum(diag_dP, axis=-1)
                 - jnp.sum(jnp.multiply(left_term, dPL), axis=(-2, -1))
             ) / noise
+            # print(f"trace_P: {trace_P}")
         else:
             PinvdPz = jnp.zeros_like(zs)
 
@@ -224,6 +248,8 @@ def setup_loss_dloss_mpcg(
             _K_linear_op, DiagLinearOp(jnp.full(_K_linear_op.shape[0], noise))
         )
         ######################################
+
+        ## 7. calc dloss
         for i in range(len(init)):
             ## for large cond. # covariance, usually not reach convergence here.
             if use_lazy_matrix:

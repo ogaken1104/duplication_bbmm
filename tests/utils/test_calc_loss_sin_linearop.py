@@ -392,5 +392,5 @@ def test_loss_sin1d_1000_x100_init_2_lazy():
         kwargs_setup_loss=kwargs_setup_loss,
         test_gpytorch=True,
         use_lazy_matrix=True,
-        matmul_blockwise=True,
+        matmul_blockwise=False,
     )
