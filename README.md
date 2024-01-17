@@ -13,21 +13,15 @@
 
 ## Todo
 ### must
-- ~~calc whole log marginal likelihood and its derivative to check~~
-- change preconditioner to use jax: very slow but successful
-- implement inference by our BBMM
-  - simple sin curve
-    - ~~possible (if the condiiotn number is not too large ($\lt1e6$))~~
-    - try to use analytical derivative
-  - sin curve with its laplasian
-    - possible
-  - stokes eq in 2D
-    - not converge (becuase of high cond. #)
-  - try larger number of points (~10^5~7)
+- implement optimization of noise hyper-parameter for diag linear operator
+- apply algorithm to training and inference of our SP
+- compare speed and accuracy of inference with cholesky method
+- refactoring of the code
+  - lazy_evaluated_kernel_tensor.py
 
 ### should in future
 - find better preconditioning way?
-- elucidate why pivoted cholesky decompositoin by jax is slow than numpy x10.
+<!-- - elucidate why pivoted cholesky decompositoin by jax is slow than numpy x10. -->
 
 ## test
 - what to test
@@ -38,17 +32,26 @@
 ## Program Structue
 - functions
   - pivoted_chokesky_xxx.py: pivoted cholesky decompoisition using numpy or jax
-- operators: class for enablling matrix-matrix multiplicatoin
-  - _linear_operator.py: base class
+- operators: class for enablling matrix-matrix multiplicatoin, mimicked from https://github.com/cornellius-gp/linear_operator
+  - _linear_operator.py: base class for LinearOp
   - lazy_evaluated_kernel_tensor.py: class for covariance matrix
+  - diag_linear_operator.py: class for diagonal matrix
+  - root_linear_operator.py: class for root matrix
+  - sum_linear_operator.py: class for sum of linear operators
+  - psd_sum_linear_operator.py: class for sum of positive semi-definite linear operators
+  - added_diag_linear_operator.py: class for adding diagonal matrix to linear operator
 - utils: calculation scheme
   - calc_logdet
-  - calc_trace
   - conjugate_gradient
   - preconditioner
-  - mmm (do not use)
+  - calc_loss_dloss_linear_solve.py
+  - calc_prediction_linear_solve.py
+  - calc_loss_dloss.py
+  - calc_prediction.py
+  - ~~calc_trace~~
+  - ~~mmm~~
 
-## desing of class
+## desing of class of operators
 ### linear_operator
 - methods:
   - matmul, _diagonal, shape
