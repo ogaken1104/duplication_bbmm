@@ -112,7 +112,6 @@ def mpcg_bbmm(
     ## our own implementation
     is_zero = jnp.full(r0.shape[1], False)
 
-    # @partial(jit, static_argnames=["A", "n_tridiag"])  # is making A static OK?
     def _linear_cg_updates(A, d, r0, z0, u, n_tridiag, is_zero):
         zeros_num_rhs = jnp.zeros(r0.shape[1])
         ones_num_rhs = jnp.ones(r0.shape[1])

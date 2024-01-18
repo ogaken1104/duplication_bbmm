@@ -22,8 +22,6 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         Kss,
         sec1,
         sec2,
-        jiggle,
-        calc_derivative=None,
         num_component=1,
         matmul_blockwise=False,
     ) -> None:
@@ -32,7 +30,6 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         self.Kss = Kss
         self.sec1 = sec1
         self.sec2 = sec2
-        self.jiggle = jiggle
         self.theta = None
         self.num_component = num_component
         self.matmul_blockwise = matmul_blockwise
@@ -63,8 +60,6 @@ class LazyEvaluatedKernelMatrix(LinearOp):
 
             ## calculate vmm for each row
             res, _ = lax.scan(calc_K_component, res, xs=(index_scan, r1s_k))
-        res = jnp.add(res, self.jiggle)
-
         return res
 
     ## Kの各行を計算する関数を返す関数
@@ -155,8 +150,6 @@ class LazyEvaluatedKernelMatrix(LinearOp):
                     """
                     i, r1 = xs
                     K_row = calc_K_row(r1)
-                    if self.jiggle:
-                        K_row = K_row.at[i].add(self.jiggle)
                     if self.num_component == 1:
                         res = res.at[i, :].set(jnp.matmul(K_row, rhs))
                     else:
@@ -189,8 +182,6 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             calc_K_row = self.setup_calc_K_row(k, self.Kss[k])
 
             K_row = calc_K_row(r1s_k[i - self.sec1[k]])
-            if self.jiggle:
-                K_row = K_row.at[i].add(self.jiggle)
             res = res.at[index_res, :].set(K_row)
 
         return res

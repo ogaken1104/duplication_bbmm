@@ -54,7 +54,6 @@ def setup_loss_dloss_mpcg(
                 Kss=Kss,
                 sec1=gp_model.sec_tr,
                 sec2=gp_model.sec_tr,
-                jiggle=False,
                 matmul_blockwise=matmul_blockwise,
             )
             _K_linear_op.set_theta(init)
@@ -118,7 +117,6 @@ def setup_loss_dloss_mpcg(
                 Kss=dKss,
                 sec1=gp_model.sec_tr,
                 sec2=gp_model.sec_tr,
-                jiggle=False,
                 num_component=len(init),
                 matmul_blockwise=matmul_blockwise,
             )
@@ -149,7 +147,6 @@ def setup_loss_dloss_mpcg(
                         Kss=Kss,
                         sec1=gp_model.sec_tr,
                         sec2=gp_model.sec_tr,
-                        jiggle=False,
                         matmul_blockwise=matmul_blockwise,
                     )
                     _K_linear_op.set_theta(theta)
@@ -196,7 +193,6 @@ def setup_loss_dloss_mpcg(
                         Kss=Kss,
                         sec1=gp_model.sec_tr,
                         sec2=gp_model.sec_tr,
-                        jiggle=False,
                         matmul_blockwise=matmul_blockwise,
                     )
                     _K_linear_op.set_theta(theta)
@@ -237,7 +233,6 @@ def setup_loss_dloss_mpcg(
                 Kss=Kss,
                 sec1=gp_model.sec_tr,
                 sec2=gp_model.sec_tr,
-                jiggle=False,
                 matmul_blockwise=matmul_blockwise,
             )
             _K_linear_op.set_theta(init)

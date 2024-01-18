@@ -118,7 +118,6 @@ def test_lazy_evaluated_kernel_matrix(
         Kss=Kss,
         sec1=gp_model.sec_tr,
         sec2=gp_model.sec_tr,
-        jiggle=None,
     )
     lazy_evaluated_kernel_matrix.set_theta(init)
     added_diag = AddedDiagLinearOp(
@@ -144,7 +143,6 @@ def test_lazy_evaluated_kernel_matrix(
         Kss=dKss,
         sec1=gp_model.sec_tr,
         sec2=gp_model.sec_tr,
-        jiggle=None,
         calc_derivative=True,
         num_component=len(init),
     )

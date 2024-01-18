@@ -44,7 +44,6 @@ def setup_predictor_mpcg(
                 Kss=Kss,
                 sec1=gp_model.sec_tr,
                 sec2=gp_model.sec_tr,
-                jiggle=False,
                 matmul_blockwise=matmul_blockwise,
             )
             _K_linear_op.set_theta(opt)

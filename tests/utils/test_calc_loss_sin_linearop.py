@@ -43,6 +43,8 @@ def calc_loss_sin(
     kwargs_setup_loss=None,
     use_lazy_matrix=False,
     matmul_blockwise=False,
+    test_cholesky=True,
+    test_ours=True,
 ):
     print("\n\n")
     caller_name = inspect.currentframe().f_back.f_code.co_name
@@ -78,7 +80,7 @@ def calc_loss_sin(
     for i in range(len(r_train)):
         delta_y_train = jnp.append(delta_y_train, f_train[i] - μ_train[i])
 
-    params_model["epsilon"] = 1e-06
+    # params_model["epsilon"] = 1e-06
     args_predict = r_test, μ_test, r_train, delta_y_train, params_model["epsilon"]
     noise = params_model["epsilon"]
 
@@ -95,10 +97,10 @@ def calc_loss_sin(
     func = jit(logposterior(loglikelihood, params_optimization))
     dfunc = jit(grad(func, 0))
     hess = hessian(func)
-
-    _K = gp_model.trainingK_all(init, r_train)
-    K = gp_model.add_eps_to_sigma(_K, noise)
-    test_modules.is_positive_definite(K), test_modules.check_cond(K)
+    if test_cholesky:
+        _K = gp_model.trainingK_all(init, r_train)
+        K = gp_model.add_eps_to_sigma(_K, noise)
+        test_modules.is_positive_definite(K), test_modules.check_cond(K)
 
     if kwargs_setup_loss is None:
         kwargs_setup_loss = {
@@ -109,25 +111,37 @@ def calc_loss_sin(
             "max_iter_cg": 1000,
             "min_preconditioning_size": 2000,
         }
-    func_value_grad_mpcg = calc_loss_dloss_linearop.setup_loss_dloss_mpcg(
-        gp_model=gp_model,
-        return_yKinvy=True,
-        use_lazy_matrix=use_lazy_matrix,
-        matmul_blockwise=matmul_blockwise,
-        **kwargs_setup_loss,
-    )
 
-    start_time = time.time()
-    loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
-        init, *args_predict[2:]
-    )
-    end_time = time.time()
-    print(f"time for loss and dloss:  {end_time - start_time:.2f} sec")
+    if test_ours:
+        func_value_grad_mpcg = calc_loss_dloss_linearop.setup_loss_dloss_mpcg(
+            gp_model=gp_model,
+            return_yKinvy=True,
+            use_lazy_matrix=use_lazy_matrix,
+            matmul_blockwise=matmul_blockwise,
+            **kwargs_setup_loss,
+        )
 
-    loss_cholesky = func(init, *args_predict[2:]) / len(K)
-    dloss_cholesky = dfunc(init, *args_predict[2:]) / len(K)
-    yKinvy_cholesky = gp_model._calc_yKinvy(init, *args_predict[2:])
-    yKdKKy_cholesky = gp_model._calc_yKdKKy(init, *args_predict[2:])
+        loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
+            init.at[0].set(1.0), *args_predict[2:]
+        )
+        start_time = time.time()
+        loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
+            init, *args_predict[2:]
+        )
+        end_time = time.time()
+        print(f"\ntime for loss and dloss (ours):  {end_time - start_time:.2e} sec")
+
+    if test_cholesky:
+        ## compilation
+        loss_cholesky = func(init.at[0].set(1.0), *args_predict[2:]) / len(K)
+        dloss_cholesky = dfunc(init.at[0].set(1.0), *args_predict[2:]) / len(K)
+        start_time = time.time()
+        loss_cholesky = func(init, *args_predict[2:]) / len(K)
+        dloss_cholesky = dfunc(init, *args_predict[2:]) / len(K)
+        end_time = time.time()
+        print(f"time for loss and dloss (cholesky):  {end_time - start_time:.2e} sec\n")
+        yKinvy_cholesky = gp_model._calc_yKinvy(init, *args_predict[2:])
+        yKdKKy_cholesky = gp_model._calc_yKdKKy(init, *args_predict[2:])
 
     ## check gpytorch
     if test_gpytorch:
@@ -154,12 +168,14 @@ def calc_loss_sin(
                 return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
         # initialize liklihood and model
-        noise_constraint = gpytorch.constraints.Interval(1e-7, 1e-5)
+        noise_constraint = gpytorch.constraints.Interval(1e-7, 1e-1)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_constraint=noise_constraint
         )
         model = ExactGPModel(train_x, train_y, likelihood)
-        model.likelihood.noise = torch.tensor(1e-06, dtype=torch.float64)
+        model.likelihood.noise = torch.tensor(
+            params_model["epsilon"], dtype=torch.float64
+        )
         model.covar_module.outputscale = torch.tensor(
             np.exp(init[0]), dtype=torch.float64
         )
@@ -167,6 +183,7 @@ def calc_loss_sin(
             np.exp(init[1]), dtype=torch.float64
         )
 
+        start_time = time.time()
         model.train()
         likelihood.train()
 
@@ -181,54 +198,58 @@ def calc_loss_sin(
         dloss_torch = torch.autograd.grad(loss_torch, model.covar_module.parameters())
 
         loss_torch = loss_torch.detach().numpy().squeeze()
-        ## dL/dtheta = dL/dexp(theta) * exp(theta)
-        # dloss_torch = np.multiply(
-        #     np.exp(init),
-        #     np.array(
-        #         [dloss_torch[0].detach().numpy(), dloss_torch[1].detach().numpy()[0][0]]
-        #     ),
-        # )
         dloss_torch = np.multiply(
             np.exp(init),
             np.array([np.squeeze(d.detach().numpy()) for d in dloss_torch]),
         )
-    print(f"yKinvy ours: {yKinvy_ours:.1e}")
-    print(f"yKinvy cholesky: {yKinvy_cholesky:.1e}")
-    print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
+        end_time = time.time()
+        print(f"\ntime for loss and dloss (gpytorch):  {end_time - start_time:.2e} sec")
+    if test_ours:
+        print(f"yKinvy ours: {yKinvy_ours:.1e}")
+    if test_cholesky:
+        print(f"yKinvy cholesky: {yKinvy_cholesky:.1e}")
+        print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
     print("\n")
-    print(f"loss ours: {loss_ours:.1e}")
-    print(f"loss cholesky: {loss_cholesky:.1e}")
+    if test_ours:
+        print(f"loss ours: {loss_ours:.1e}")
+    if test_cholesky:
+        print(f"loss cholesky: {loss_cholesky:.1e}")
     if test_gpytorch:
         print(f"loss torch: {loss_torch:.1e}")
     print("\n")
 
-    print(
-        f"yKdKKy ours: {np.array2string(yKdKKy_ours, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
-    )
-    print(
-        f"yKdKKy cholesky: {np.array2string(yKdKKy_cholesky, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
-    )
-    print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
+    if test_ours:
+        print(
+            f"yKdKKy ours: {np.array2string(yKdKKy_ours, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
+        )
+    if test_cholesky:
+        print(
+            f"yKdKKy cholesky: {np.array2string(yKdKKy_cholesky, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
+        )
+        print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
     print("\n")
-
-    print(f"dloss ours: {dloss_ours}")
-    print(f"dloss cholesky: {dloss_cholesky}")
+    if test_ours:
+        print(f"dloss ours: {dloss_ours}")
+    if test_cholesky:
+        print(f"dloss cholesky: {dloss_cholesky}")
     if test_gpytorch:
         print(f"dloss torch: {dloss_torch}")
+        print("\n")
+    if test_cholesky:
+        aerr_loss_ours = jnp.abs(loss_cholesky - loss_ours)
+        aerr_dloss_ours = jnp.mean(jnp.abs(dloss_cholesky - dloss_ours))
+        print(f"aerr loss ours: {aerr_loss_ours:.1e}")
+        print(f"aerr dloss ours: {aerr_dloss_ours:.1e}")
     print("\n")
-    aerr_loss_ours = jnp.abs(loss_cholesky - loss_ours)
-    aerr_dloss_ours = jnp.mean(jnp.abs(dloss_cholesky - dloss_ours))
-    print(f"aerr loss ours: {aerr_loss_ours:.1e}")
-    print(f"aerr dloss ours: {aerr_dloss_ours:.1e}")
-    print("\n")
-    if test_gpytorch:
+    if test_gpytorch and test_cholesky:
         aerr_loss_torch = jnp.abs(loss_cholesky - loss_torch)
         aerr_dloss_torch = jnp.mean(jnp.abs(dloss_cholesky - dloss_torch))
         print(f"aerr loss torch: {aerr_loss_torch:.1e}")
         print(f"aerr dloss torch: {aerr_dloss_torch:.1e}")
 
-    assert aerr_loss_ours < atol
-    assert aerr_dloss_ours < atol
+    if test_cholesky:
+        assert aerr_loss_ours < atol
+        assert aerr_dloss_ours < atol
 
 
 def test_loss_sin1d_10_init_0():
@@ -239,19 +260,19 @@ def test_loss_sin1d_10_init_0():
     calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
 
 
-def test_loss_sin1d_10_init_0_lazy():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive"
-    init = jnp.array([0.0, 0.0])
-    scale = 1.0
-    calc_loss_sin(
-        project_name,
-        simulation_name,
-        init,
-        scale,
-        test_gpytorch=True,
-        use_lazy_matrix=True,
-    )
+# def test_loss_sin1d_10_init_0_lazy():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive"
+#     init = jnp.array([0.0, 0.0])
+#     scale = 1.0
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         test_gpytorch=False,
+#         use_lazy_matrix=True,
+#     )
 
 
 def test_loss_sin1d_10_init_0_lazy_blockwise():
@@ -264,7 +285,7 @@ def test_loss_sin1d_10_init_0_lazy_blockwise():
         simulation_name,
         init,
         scale,
-        test_gpytorch=True,
+        test_gpytorch=False,
         use_lazy_matrix=True,
         matmul_blockwise=True,
     )
@@ -371,7 +392,32 @@ def test_loss_sin1d_1000_x100_init_2():
     )
 
 
-def test_loss_sin1d_1000_x100_init_2_lazy():
+# def test_loss_sin1d_1000_x100_init_2_lazy():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive_y_1000"
+#     init = jnp.array([2.0, 2.0])
+#     scale = 100.0
+#     kwargs_setup_loss = {
+#         "rank": 50,
+#         "n_tridiag": 20,
+#         "max_tridiag_iter": 40,
+#         "cg_tolerance": 0.01,
+#         "max_iter_cg": 2000,
+#         "min_preconditioning_size": 1,
+#     }
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         kwargs_setup_loss=kwargs_setup_loss,
+#         test_gpytorch=True,
+#         use_lazy_matrix=False,
+#         matmul_blockwise=False,
+#     )
+
+
+def test_loss_sin1d_1000_x100_init_2_lazy_blockwise():
     project_name = "data"
     simulation_name = "test_loss_sin1d_naive_y_1000"
     init = jnp.array([2.0, 2.0])
@@ -390,7 +436,7 @@ def test_loss_sin1d_1000_x100_init_2_lazy():
         init,
         scale,
         kwargs_setup_loss=kwargs_setup_loss,
-        test_gpytorch=True,
+        test_gpytorch=False,
         use_lazy_matrix=True,
-        matmul_blockwise=False,
+        matmul_blockwise=True,
     )

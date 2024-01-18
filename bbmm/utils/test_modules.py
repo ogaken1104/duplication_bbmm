@@ -63,7 +63,7 @@ def check_cholesky_inverse_accuracy(K):
     print(res)
 
 
-def set_linear_operator_settings(kwargs_setup_loss):
+def set_linear_operator_settings(kwargs_setup_loss, use_lazy_matrix=True):
     linear_operator.settings.cg_tolerance._set_value(kwargs_setup_loss["max_iter_cg"])
     linear_operator.settings.min_preconditioning_size._set_value(
         kwargs_setup_loss["min_preconditioning_size"]
@@ -78,3 +78,5 @@ def set_linear_operator_settings(kwargs_setup_loss):
     linear_operator.settings.max_preconditioner_size._set_value(
         kwargs_setup_loss["rank"]
     )
+    if use_lazy_matrix:
+        linear_operator.settings.max_cholesky_size._set_value(1)

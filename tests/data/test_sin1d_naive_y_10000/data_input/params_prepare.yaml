@@ -1,0 +1,38 @@
+generate_test:
+  test_num: 300
+  test_side: false
+generate_training:
+  sigma2_noise: 0.04
+  y_num: 10000
+kernel_arg:
+- yy
+num_points:
+  test:
+    sum: 300
+    y: 300
+  training:
+    sum: 10000
+    y: 10000
+plot:
+  error_limit:
+  - 0.0001
+  - 0.1
+  std_limit:
+  - 0
+  - 0.002
+  val_limits:
+  - - -1.0
+    - 1.0
+  x_for_ux: 0.5
+setting:
+  num_period: 20
+  use_pbc_points: false
+vnames:
+  analysis:
+  - y
+  infer:
+  - y
+  test:
+  - y
+  train:
+  - y
