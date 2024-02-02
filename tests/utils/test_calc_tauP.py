@@ -19,7 +19,7 @@ import bbmm.functions.pivoted_cholesky_jax as pc_jax
 from stopro.sub_modules.load_modules import load_params, load_data
 from stopro.sub_modules.loss_modules import hessian, logposterior
 from stopro.sub_modules.init_modules import get_init, reshape_init
-import stopro.GP.gp_1D_naive as gp_1D_naive
+import stopro.GP.gp_naive as gp_1D_naive
 from stopro.data_handler.data_handle_module import HdfOperator
 from stopro.GP.kernels import define_kernel
 
@@ -60,7 +60,7 @@ def test_calc_tauP():
 
     # setup model
     Kernel = define_kernel(params_model)
-    gp_model = gp_1D_naive.GPmodel1DNaive(
+    gp_model = gp_1D_naive.GPmodelNaive(
         Kernel=Kernel,
     )
     gp_model.set_constants(*args_predict)

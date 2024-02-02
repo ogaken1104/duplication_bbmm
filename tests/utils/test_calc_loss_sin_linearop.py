@@ -20,7 +20,7 @@ import torch
 torch.set_default_dtype(torch.float64)
 
 # import stopro.solver.optimizers as optimizers
-import stopro.GP.gp_1D_naive as gp_1D_naive
+import stopro.GP.gp_naive as gp_1D_naive
 from stopro.data_handler.data_handle_module import HdfOperator
 from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.load_modules import load_data, load_params
@@ -47,7 +47,7 @@ def calc_loss_sin(
     matmul_blockwise=False,
     test_cholesky=True,
     test_ours=True,
-    gp_class=gp_1D_naive.GPmodel1DNaive,
+    gp_class=gp_1D_naive.GPmodelNaive,
 ):
     print("\n\n")
     caller_name = inspect.currentframe().f_back.f_code.co_name
