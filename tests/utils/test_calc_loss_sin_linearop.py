@@ -25,6 +25,8 @@ from stopro.data_handler.data_handle_module import HdfOperator
 from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
+from stopro.sub_modules.init_modules import get_init
+from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
 
 #########
 
@@ -45,6 +47,7 @@ def calc_loss_sin(
     matmul_blockwise=False,
     test_cholesky=True,
     test_ours=True,
+    gp_class=gp_1D_naive.GPmodel1DNaive,
 ):
     print("\n\n")
     caller_name = inspect.currentframe().f_back.f_code.co_name
@@ -64,11 +67,13 @@ def calc_loss_sin(
     params_kernel_arg = params_prepare["kernel_arg"]
 
     # # prepare initial hyper-parameter
-    # init = get_init(
-    #     params_model["init_kernel_hyperparameter"],
-    #     params_model["kernel_type"],
-    #     system_type=params_model["system_type"],
-    # )
+    if init is None:
+        init = get_init(
+            params_model["init_kernel_hyperparameter"],
+            params_model["kernel_type"],
+            system_type=params_model["system_type"],
+        )
+    print(init)
 
     # prepare data
     hdf_operator = HdfOperator(f"{project_name}/{simulation_name}")
@@ -86,9 +91,15 @@ def calc_loss_sin(
 
     # setup model
     Kernel = define_kernel(params_model)
-    gp_model = gp_1D_naive.GPmodel1DNaive(
-        Kernel=Kernel,
-    )
+    if gp_class == GPSinusoidalWithoutPIndependent:
+        gp_model = gp_class(
+            Kernel=Kernel,
+            lbox=jnp.array([2.5, 0.0]),
+        )
+    else:
+        gp_model = gp_class(
+            Kernel=Kernel,
+        )
     gp_model.set_constants(*args_predict)
     loglikelihood, predictor = (
         gp_model.trainingFunction_all,
