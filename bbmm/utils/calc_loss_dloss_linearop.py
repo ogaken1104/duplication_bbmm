@@ -107,6 +107,8 @@ def setup_loss_dloss_mpcg(
         # add jeffery's prior
         loss += jnp.sum(init)
 
+        del K_linear_op, t_mat
+
         ## calc dloss
         ## 5. prepare dKdtheta linear_op
         dKdtheta_linear_op = []

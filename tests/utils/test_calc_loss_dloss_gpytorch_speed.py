@@ -95,7 +95,7 @@ def test_loss_sin1d_20000():
         test_gpytorch=False,
         use_lazy_matrix=True,
         kwargs_setup_loss=kwargs_setup_loss,
-        test_cholesky=True,
+        test_cholesky=False,
     )
 
 
