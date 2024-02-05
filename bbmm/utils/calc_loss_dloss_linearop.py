@@ -118,18 +118,22 @@ def setup_loss_dloss_mpcg(
         ## 5. prepare dKdtheta linear_op
         dKdtheta_linear_op = []
         if use_lazy_matrix:
-            lazy_kernel_derivative = LazyEvaluatedKernelMatrix(
-                r1s=r,
-                r2s=r,
-                Kss=dKss,
-                sec1=gp_model.sec_tr,
-                sec2=gp_model.sec_tr,
-                num_component=len(init),
-                matmul_blockwise=matmul_blockwise,
-            )
-            lazy_kernel_derivative.set_theta(init)
-            dKzs_list = jnp.transpose(lazy_kernel_derivative.matmul(zs), (2, 0, 1))
-            dKKinvy_list = jnp.transpose(lazy_kernel_derivative.matmul(Kinvy[:, -1]))
+            # pass
+            if not matmul_blockwise:
+                lazy_kernel_derivative = LazyEvaluatedKernelMatrix(
+                    r1s=r,
+                    r2s=r,
+                    Kss=dKss,
+                    sec1=gp_model.sec_tr,
+                    sec2=gp_model.sec_tr,
+                    num_component=len(init),
+                    matmul_blockwise=matmul_blockwise,
+                )
+                lazy_kernel_derivative.set_theta(init)
+                dKzs_list = jnp.transpose(lazy_kernel_derivative.matmul(zs), (2, 0, 1))
+                dKKinvy_list = jnp.transpose(
+                    lazy_kernel_derivative.matmul(Kinvy[:, -1])
+                )
         else:
 
             def calc_trainingK(theta):
@@ -255,7 +259,21 @@ def setup_loss_dloss_mpcg(
         for i in range(len(init)):
             ## for large cond. # covariance, usually not reach convergence here.
             if use_lazy_matrix:
-                dKzs = dKzs_list[i]
+                if matmul_blockwise:
+                    ### calc dKss seperatley ##
+                    dKss_i = gp_model.setup_dKss_theta_i(i)
+                    dK_linear_op = LazyEvaluatedKernelMatrix(
+                        r1s=r,
+                        r2s=r,
+                        Kss=dKss_i,
+                        sec1=gp_model.sec_tr,
+                        sec2=gp_model.sec_tr,
+                        matmul_blockwise=matmul_blockwise,
+                    )
+                    dK_linear_op.set_theta(init)
+                    dKzs = dK_linear_op.matmul(zs)
+                else:
+                    dKzs = dKzs_list[i]
             else:
                 dK_linear_op = dKdtheta_linear_op[i]
                 dKzs = dK_linear_op.matmul(zs)
@@ -279,7 +297,11 @@ def setup_loss_dloss_mpcg(
 
             ## we have to modify here
             if use_lazy_matrix:
-                yKdKKy = Kinvy[:, -1].T @ dKKinvy_list[i]
+                if matmul_blockwise:
+                    yKdKKy = Kinvy[:, -1].T @ dK_linear_op.matmul(Kinvy[:, -1])
+                else:
+                    yKdKKy = Kinvy[:, -1].T @ dKKinvy_list[i]
+                # print(Kinvy[:, -1].shape)
             else:
                 yKdKKy = Kinvy[:, -1].T @ dK_linear_op.matmul(Kinvy[:, -1])
             if return_yKinvy:

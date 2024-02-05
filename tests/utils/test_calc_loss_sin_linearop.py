@@ -220,7 +220,8 @@ def calc_loss_sin(
         print(f"yKinvy ours: {yKinvy_ours:.1e}")
     if test_cholesky:
         print(f"yKinvy cholesky: {yKinvy_cholesky:.1e}")
-        print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
+        if test_ours:
+            print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
     print("\n")
     if test_ours:
         print(f"loss ours: {loss_ours:.1e}")
@@ -238,7 +239,8 @@ def calc_loss_sin(
         print(
             f"yKdKKy cholesky: {np.array2string(yKdKKy_cholesky, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
         )
-        print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
+        if test_ours:
+            print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
     print("\n")
     if test_ours:
         print(f"dloss ours: {dloss_ours}")
