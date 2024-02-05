@@ -51,7 +51,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
             index_scan = jnp.arange(self.sec1[k], self.sec1[k + 1])
             # calc_K_component = self.setup_calc_K_component(self.Kss[k, k])
-            K = self.Kss[k][k]
+            K = self.Kss[k][0]
 
             def calc_K_component(res, xs):
                 i, r1 = xs
@@ -63,7 +63,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         return res
 
     ## Kの各行を計算する関数を返す関数
-    def setup_calc_K_row(self, sec1_index, Ks):
+    def setup_calc_K_row(self, sec1_index, Kss):
         def calc_K_row(r1):
             """
             function to calculate each row of K
@@ -78,11 +78,13 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             for j in range(len(self.sec2) - 1):
                 if j >= sec1_index:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
-                        jnp.squeeze(Ks[j](r1, self.r2s[j], self.theta))
+                        jnp.squeeze(
+                            Kss[sec1_index][j - sec1_index](r1, self.r2s[j], self.theta)
+                        )
                     )
                 else:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
-                        jnp.squeeze(Ks[j](self.r2s[j], r1, self.theta))
+                        jnp.squeeze(Kss[j][sec1_index - j](self.r2s[j], r1, self.theta))
                     )
             return K_row
 
@@ -99,49 +101,55 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         ## matmul with blockwise
         if self.matmul_blockwise:
             for i in range(len(self.sec1) - 1):
-                if self.num_component == 1:
-                    K_block = jnp.zeros(
-                        (self.sec1[i + 1] - self.sec1[i], self.sec2[-1])
-                    )
-                else:
-                    K_block = jnp.zeros(
-                        (
-                            self.sec1[i + 1] - self.sec1[i],
-                            self.sec2[-1],
-                            self.num_component,
-                        )
-                    )
                 for j in range(len(self.sec2) - 1):
+                    # num_block_row = self.sec1[i + 1] - self.sec1[i]
+                    # num_block_col = self.sec2[j + 1] - self.sec2[j]
+                    # if self.num_component == 1:
+                    #     K_block = jnp.zeros((num_block_row, num_block_col))
+                    # else:
+                    #     K_block = jnp.zeros(
+                    #         (
+                    #             num_block_row,
+                    #             num_block_col,
+                    #             self.num_component,
+                    #         )
+                    #     )
                     if j >= i:
-                        K_block = K_block.at[:, self.sec2[j] : self.sec2[j + 1]].set(
-                            self.Kss[i][j](self.r1s[i], self.r2s[j], self.theta)
+                        K_block = self.Kss[i][j - i](
+                            self.r1s[i], self.r2s[j], self.theta
                         )
                     else:
-                        K_block = K_block.at[:, self.sec2[j] : self.sec2[j + 1]].set(
-                            self.Kss[i][j](self.r2s[i], self.r1s[j], self.theta)
+                        K_block = self.Kss[j][i - j](
+                            self.r2s[i], self.r1s[j], self.theta
                         )
-                if self.num_component == 1:
-                    res = res.at[self.sec1[i] : self.sec1[i + 1],].set(
-                        jnp.matmul(K_block, rhs)
-                    )
-                else:
-                    if rhs.ndim == 1:
-                        res = res.at[self.sec1[i] : self.sec1[i + 1],].set(
-                            jnp.matmul(jnp.transpose(K_block, (0, 2, 1)), rhs),
+                    if self.num_component == 1:
+                        res = res.at[self.sec1[i] : self.sec1[i + 1]].add(
+                            jnp.matmul(K_block, rhs[self.sec2[j] : self.sec2[j + 1]])
                         )
                     else:
-                        res = res.at[self.sec1[i] : self.sec1[i + 1],].set(
-                            jnp.transpose(
-                                jnp.matmul(jnp.transpose(K_block, (0, 2, 1)), rhs),
-                                (0, 2, 1),
-                            ),
-                        )
+                        if rhs.ndim == 1:
+                            res = res.at[self.sec1[i] : self.sec1[i + 1]].add(
+                                jnp.matmul(
+                                    jnp.transpose(K_block, (0, 2, 1)),
+                                    rhs[self.sec2[j] : self.sec2[j + 1]],
+                                ),
+                            )
+                        else:
+                            res = res.at[self.sec1[i] : self.sec1[i + 1]].add(
+                                jnp.transpose(
+                                    jnp.matmul(
+                                        jnp.transpose(K_block, (0, 2, 1)),
+                                        rhs[self.sec2[j] : self.sec2[j + 1]],
+                                    ),
+                                    (0, 2, 1),
+                                ),
+                            )
         ## matmul with rowise
         else:
             for k in range(len(self.sec1[:-1])):
                 r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
                 index_scan = jnp.arange(self.sec1[k], self.sec1[k + 1])
-                calc_K_row = self.setup_calc_K_row(k, self.Kss[k])
+                calc_K_row = self.setup_calc_K_row(k, self.Kss)
 
                 @jit
                 def calc_vmm(res, xs):
@@ -179,7 +187,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         for index_res, i in enumerate(index):
             k = get_sec1_index(i)
             r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
-            calc_K_row = self.setup_calc_K_row(k, self.Kss[k])
+            calc_K_row = self.setup_calc_K_row(k, self.Kss)
 
             K_row = calc_K_row(r1s_k[i - self.sec1[k]])
             res = res.at[index_res, :].set(K_row)

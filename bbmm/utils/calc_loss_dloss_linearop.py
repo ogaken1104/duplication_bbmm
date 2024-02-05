@@ -32,15 +32,20 @@ def setup_loss_dloss_mpcg(
     matmul_blockwise=False,
 ):
     if use_lazy_matrix:
-        Kss = gp_model.trainingKs.copy()
-        for i in range(len(Kss)):
-            for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
-                Kss[i] = [Kss[j][i]] + Kss[i]
+        # if matmul_blockwise:
+        Kss = gp_model.trainingKs
         gp_model.setup_Ks_dKdtheta()
-        dKss = gp_model.Ks_dKdtheta.copy()
-        for i in range(len(dKss)):
-            for j in list(range(len(dKss) - len(dKss[i])))[::-1]:
-                dKss[i] = [dKss[j][i]] + dKss[i]
+        dKss = gp_model.Ks_dKdtheta
+        # else:
+        #     Kss = gp_model.trainingKs.copy()
+        #     for i in range(len(Kss)):
+        #         for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
+        #             Kss[i] = [Kss[j][i]] + Kss[i]
+        #     gp_model.setup_Ks_dKdtheta()
+        #     dKss = gp_model.Ks_dKdtheta.copy()
+        #     for i in range(len(dKss)):
+        #         for j in list(range(len(dKss) - len(dKss[i])))[::-1]:
+        #             dKss[i] = [dKss[j][i]] + dKss[i]
 
     def loss_dloss_mpcg(init, *args):
         #################################################
