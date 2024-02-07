@@ -1,0 +1,72 @@
+generate_test:
+  test_num: 40
+  z_plane: 0.5
+generate_training:
+  div_num: 12
+  f_num: 12
+  only_velocity: false
+  slice_axis: null
+  slice_num: 0
+  u_num: 9
+  u_surface_num: 0
+kernel_arg:
+- uxux
+- uyuy
+- uzuz
+- pp
+num_points:
+  test:
+    sum: 4800
+    ux: 1600
+    uy: 1600
+    uz: 1600
+  training:
+    divu: 1672
+    fx: 1672
+    fy: 1672
+    fz: 1672
+    sum: 8794
+    ux: 702
+    uy: 702
+    uz: 702
+plot:
+  error_limit:
+  - 0.0001
+  - 0.1
+  std_limit:
+  - 0.0001
+  - 0.1
+  val_limits:
+  - - 0.0
+    - 0.75
+  - - -0.14
+    - 0.14
+  - - -0.1
+    - 0.1
+setting:
+  L: 1.0
+  constant_velocity: 1.0
+  half_space: false
+  moving_particle: false
+  particle_radius: 0.4
+vnames:
+  analysis:
+  - ux
+  - uy
+  - uz
+  infer:
+  - ux
+  - uy
+  - uz
+  test:
+  - ux
+  - uy
+  - uz
+  train:
+  - ux
+  - uy
+  - uz
+  - fx
+  - fy
+  - fz
+  - divu

@@ -14,10 +14,6 @@ warnings.filterwarnings("always")
 
 from bbmm.utils import calc_loss_dloss_linearop, test_modules
 
-import gpytorch
-import torch
-
-torch.set_default_dtype(torch.float64)
 
 # import stopro.solver.optimizers as optimizers
 import stopro.GP.gp_naive as gp_1D_naive
@@ -49,6 +45,11 @@ def calc_loss_sin(
     test_ours=True,
     gp_class=gp_1D_naive.GPmodelNaive,
 ):
+    if test_gpytorch:
+        import gpytorch
+        import torch
+
+        torch.set_default_dtype(torch.float64)
     print("\n\n")
     caller_name = inspect.currentframe().f_back.f_code.co_name
     print(f"#############")
@@ -101,14 +102,14 @@ def calc_loss_sin(
             Kernel=Kernel,
         )
     gp_model.set_constants(*args_predict)
-    loglikelihood, predictor = (
-        gp_model.trainingFunction_all,
-        gp_model.predictingFunction_all,
-    )
-    func = jit(logposterior(loglikelihood, params_optimization))
-    dfunc = jit(grad(func, 0))
-    hess = hessian(func)
     if test_cholesky:
+        loglikelihood, predictor = (
+            gp_model.trainingFunction_all,
+            gp_model.predictingFunction_all,
+        )
+        func = jit(logposterior(loglikelihood, params_optimization))
+        dfunc = jit(grad(func, 0))
+        hess = hessian(func)
         _K = gp_model.trainingK_all(init, r_train)
         K = gp_model.add_eps_to_sigma(_K, noise)
         # test_modules.is_positive_definite(K), test_modules.check_cond(K)
@@ -219,7 +220,8 @@ def calc_loss_sin(
         print(f"yKinvy ours: {yKinvy_ours:.1e}")
     if test_cholesky:
         print(f"yKinvy cholesky: {yKinvy_cholesky:.1e}")
-        print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
+        if test_ours:
+            print(f"aerr yKinvy: {jnp.abs(yKinvy_cholesky-yKinvy_ours):.1e}")
     print("\n")
     if test_ours:
         print(f"loss ours: {loss_ours:.1e}")
@@ -237,7 +239,8 @@ def calc_loss_sin(
         print(
             f"yKdKKy cholesky: {np.array2string(yKdKKy_cholesky, formatter={'float_kind': '{:.1e}'.format}, separator=', ')}"
         )
-        print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
+        if test_ours:
+            print(f"aerr yKdKKy: {jnp.mean(jnp.abs(yKdKKy_cholesky-yKdKKy_ours)):.1e}")
     print("\n")
     if test_ours:
         print(f"dloss ours: {dloss_ours}")
