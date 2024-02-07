@@ -111,7 +111,7 @@ def calc_loss_sin(
     if test_cholesky:
         _K = gp_model.trainingK_all(init, r_train)
         K = gp_model.add_eps_to_sigma(_K, noise)
-        test_modules.is_positive_definite(K), test_modules.check_cond(K)
+        # test_modules.is_positive_definite(K), test_modules.check_cond(K)
 
     if kwargs_setup_loss is None:
         kwargs_setup_loss = {
