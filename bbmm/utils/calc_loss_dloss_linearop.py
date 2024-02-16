@@ -261,7 +261,7 @@ def setup_loss_dloss_mpcg(
             if use_lazy_matrix:
                 if matmul_blockwise:
                     ### calc dKss seperatley ##
-                    dKss_i = gp_model.setup_dKss_theta_i(i)
+                    dKss_i = gp_model.setup_dKss_theta_i(i) ## very slow because we have to generate too many functions by autograd ... ? 
                     dK_linear_op = LazyEvaluatedKernelMatrix(
                         r1s=r,
                         r2s=r,
