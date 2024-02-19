@@ -41,7 +41,6 @@ def mpcg_bbmm(
     max_tridiag_iter: int = 20,
     # return_iter_cg: bool = False,
     stop_updating_after: float = 1e-10,
-    theta: jnp.ndarray = None,
 ) -> Tuple[jnp.ndarray, ...]:
     """function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A. (Gardner et al, 2018 https://arxiv.org/abs/1809.11165)
 
@@ -87,10 +86,7 @@ def mpcg_bbmm(
 
     ## current residual
     if isinstance(A, LinearOp):
-        if theta is not None:
-            r0 = rhs - A.matmul(u, theta)
-        else:
-            r0 = rhs - A.matmul(u)
+        r0 = rhs - A.matmul(u)
     else:
         r0 = rhs - jnp.matmul(A, u)
 
@@ -121,10 +117,7 @@ def mpcg_bbmm(
         ones_num_rhs = jnp.ones(r0.shape[1])
 
         if isinstance(A, LinearOp):
-            if theta is not None:
-                v = A.matmul(d, theta)
-            else:
-                v = A.matmul(d)
+            v = A.matmul(d)
         else:
             v = jnp.dot(A, d)
         # alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)

@@ -32,6 +32,5 @@ class AddedDiagLinearOp(SumLinearOp):
     def matmul(
         self,
         rhs: jnp.ndarray,
-        theta: jnp.ndarray,
     ) -> jnp.ndarray:
-        return self._linear_op.matmul(rhs, theta) + self._diag_tensor.matmul(rhs)
+        return self._linear_op.matmul(rhs) + self._diag_tensor.matmul(rhs)

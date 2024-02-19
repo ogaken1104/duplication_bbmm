@@ -12,11 +12,7 @@ import warnings
 
 warnings.filterwarnings("always")
 
-from bbmm.utils import (
-    calc_loss_dloss_linearop,
-    test_modules,
-    calc_loss_dloss_linearop_new,
-)
+from bbmm.utils import calc_loss_dloss_linearop, test_modules
 
 
 # import stopro.solver.optimizers as optimizers
@@ -48,7 +44,6 @@ def calc_loss_sin(
     test_cholesky=True,
     test_ours=True,
     gp_class=gp_1D_naive.GPmodelNaive,
-    num_component_init=2,
 ):
     if test_gpytorch:
         import gpytorch
@@ -130,22 +125,22 @@ def calc_loss_sin(
         }
 
     if test_ours:
-        func_value_grad_mpcg = calc_loss_dloss_linearop_new.setup_loss_dloss_mpcg(
+        func_value_grad_mpcg = calc_loss_dloss_linearop.setup_loss_dloss_mpcg(
             gp_model=gp_model,
             return_yKinvy=True,
             use_lazy_matrix=use_lazy_matrix,
             matmul_blockwise=matmul_blockwise,
-            args=args_predict[2:],
-            num_component_init=num_component_init,
             **kwargs_setup_loss,
         )
 
         loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
-            init.at[0].set(1.0)
+            init.at[0].set(1.0), *args_predict[2:]
         )
         start_time = time.time()
         # with jax.profiler.trace("/tmp/jax-trace", create_perfetto_link=True):
-        loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(init)
+        loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
+            init, *args_predict[2:]
+        )
         end_time = time.time()
         print(f"\ntime for loss and dloss (ours):  {end_time - start_time:.2e} sec")
 

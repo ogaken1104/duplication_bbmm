@@ -313,7 +313,6 @@ def test_loss_sp_drag3D_less():
         matmul_blockwise=False,
         test_cholesky=False,
         test_ours=True,
-        num_component_init=16,
     )
 
 
