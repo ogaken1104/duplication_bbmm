@@ -3,6 +3,7 @@ TODO:
     - implement efficient matmul calculation
         - simpler implemetation of blockwise matrix multiplication
 """
+
 import jax.numpy as jnp
 from jax import jit, lax
 from functools import partial
@@ -63,7 +64,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
         return res
 
     ## Kの各行を計算する関数を返す関数
-    def setup_calc_K_row(self, sec1_index, Kss):
+    def setup_calc_K_row(self, sec1_index, Kss, theta):
         def calc_K_row(r1):
             """
             function to calculate each row of K
@@ -79,19 +80,19 @@ class LazyEvaluatedKernelMatrix(LinearOp):
                 if j >= sec1_index:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
                         jnp.squeeze(
-                            Kss[sec1_index][j - sec1_index](r1, self.r2s[j], self.theta)
+                            Kss[sec1_index][j - sec1_index](r1, self.r2s[j], theta)
                         )
                     )
                 else:
                     K_row = K_row.at[self.sec2[j] : self.sec2[j + 1]].set(
-                        jnp.squeeze(Kss[j][sec1_index - j](self.r2s[j], r1, self.theta))
+                        jnp.squeeze(Kss[j][sec1_index - j](self.r2s[j], r1, theta))
                     )
             return K_row
 
         return calc_K_row
 
     @partial(jit, static_argnums=(0,))
-    def matmul(self, rhs: jnp.ndarray) -> jnp.ndarray:
+    def matmul(self, rhs: jnp.ndarray, theta: jnp.ndarray) -> jnp.ndarray:
         ## 解のarrayを確保
         if self.num_component == 1:
             res = jnp.zeros_like(rhs)
@@ -149,7 +150,7 @@ class LazyEvaluatedKernelMatrix(LinearOp):
             for k in range(len(self.sec1[:-1])):
                 r1s_k = jnp.expand_dims(self.r1s[k], axis=1)
                 index_scan = jnp.arange(self.sec1[k], self.sec1[k + 1])
-                calc_K_row = self.setup_calc_K_row(k, self.Kss)
+                calc_K_row = self.setup_calc_K_row(k, self.Kss, theta)
 
                 @jit
                 def calc_vmm(res, xs):

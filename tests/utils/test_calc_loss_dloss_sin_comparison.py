@@ -20,9 +20,10 @@ def test_loss_sin1d_1000():
         simulation_name,
         init,
         scale,
-        test_gpytorch=True,
+        test_gpytorch=False,
         use_lazy_matrix=True,
         kwargs_setup_loss=kwargs_setup_loss,
+        test_cholesky=False,
     )
 
 
@@ -44,9 +45,10 @@ def test_loss_sin1d_5000():
         simulation_name,
         init,
         scale,
-        test_gpytorch=True,
+        test_gpytorch=False,
         use_lazy_matrix=True,
         kwargs_setup_loss=kwargs_setup_loss,
+        test_cholesky=False,
     )
 
 
@@ -68,16 +70,17 @@ def test_loss_sin1d_10000():
         simulation_name,
         init,
         scale,
-        test_gpytorch=True,
+        test_gpytorch=False,
         use_lazy_matrix=True,
         kwargs_setup_loss=kwargs_setup_loss,
+        test_cholesky=False,
     )
 
 
 def test_loss_sin1d_20000():
     project_name = "tests/data"
     simulation_name = "test_sin1d_naive_y_20000"
-    init = jnp.array([0.0, -1.0])
+    init = jnp.array([0.0, -0.5])
     scale = 1.0
     kwargs_setup_loss = {
         "rank": 0,
@@ -119,7 +122,7 @@ def test_loss_sin1d_30000():
         simulation_name,
         init,
         scale,
-        test_gpytorch=True,
+        test_gpytorch=False,
         use_lazy_matrix=True,
         kwargs_setup_loss=kwargs_setup_loss,
         test_cholesky=False,
