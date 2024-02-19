@@ -112,7 +112,7 @@ def setup_loss_dloss_mpcg(
         # add jeffery's prior
         loss += jnp.sum(init)
 
-        del K_linear_op, t_mat
+        # del K_linear_op, t_mat
 
         ## calc dloss
         ## 5. prepare dKdtheta linear_op
@@ -237,22 +237,22 @@ def setup_loss_dloss_mpcg(
         if return_yKinvy:
             yKdKKy_array = jnp.zeros(len(init))
         ## redefine K_linear_op: this part can be changed when K is LinearOp ##
-        if use_lazy_matrix:
-            _K_linear_op = LazyEvaluatedKernelMatrix(
-                r1s=r,
-                r2s=r,
-                Kss=Kss,
-                sec1=gp_model.sec_tr,
-                sec2=gp_model.sec_tr,
-                matmul_blockwise=matmul_blockwise,
-            )
-            _K_linear_op.set_theta(init)
-        else:
-            _K = gp_model.trainingK_all(init, r)
-            _K_linear_op = DenseLinearOp(_K)
-        K_linear_op = AddedDiagLinearOp(
-            _K_linear_op, DiagLinearOp(jnp.full(_K_linear_op.shape[0], noise))
-        )
+        # if use_lazy_matrix:
+        #     _K_linear_op = LazyEvaluatedKernelMatrix(
+        #         r1s=r,
+        #         r2s=r,
+        #         Kss=Kss,
+        #         sec1=gp_model.sec_tr,
+        #         sec2=gp_model.sec_tr,
+        #         matmul_blockwise=matmul_blockwise,
+        #     )
+        #     _K_linear_op.set_theta(init)
+        # else:
+        #     _K = gp_model.trainingK_all(init, r)
+        #     _K_linear_op = DenseLinearOp(_K)
+        # K_linear_op = AddedDiagLinearOp(
+        #     _K_linear_op, DiagLinearOp(jnp.full(_K_linear_op.shape[0], noise))
+        # )
         ######################################
 
         ## 7. calc dloss
@@ -261,7 +261,9 @@ def setup_loss_dloss_mpcg(
             if use_lazy_matrix:
                 if matmul_blockwise:
                     ### calc dKss seperatley ##
-                    dKss_i = gp_model.setup_dKss_theta_i(i) ## very slow because we have to generate too many functions by autograd ... ? 
+                    dKss_i = gp_model.setup_dKss_theta_i(
+                        i
+                    )  ## very slow because we have to generate too many functions by autograd ... ?
                     dK_linear_op = LazyEvaluatedKernelMatrix(
                         r1s=r,
                         r2s=r,

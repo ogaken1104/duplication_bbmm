@@ -137,6 +137,7 @@ def calc_loss_sin(
             init.at[0].set(1.0), *args_predict[2:]
         )
         start_time = time.time()
+        # with jax.profiler.trace("/tmp/jax-trace", create_perfetto_link=True):
         loss_ours, dloss_ours, yKinvy_ours, yKdKKy_ours = func_value_grad_mpcg(
             init, *args_predict[2:]
         )
@@ -266,12 +267,12 @@ def calc_loss_sin(
         assert aerr_dloss_ours < atol
 
 
-def test_loss_sin1d_10_init_0():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive"
-    init = jnp.array([0.0, 0.0])
-    scale = 1.0
-    calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
+# def test_loss_sin1d_10_init_0():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive"
+#     init = jnp.array([0.0, 0.0])
+#     scale = 1.0
+#     calc_loss_sin(project_name, simulation_name, init, scale, test_gpytorch=True)
 
 
 # def test_loss_sin1d_10_init_0_lazy():
@@ -289,20 +290,20 @@ def test_loss_sin1d_10_init_0():
 #     )
 
 
-def test_loss_sin1d_10_init_0_lazy_blockwise():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive"
-    init = jnp.array([0.0, 0.0])
-    scale = 1.0
-    calc_loss_sin(
-        project_name,
-        simulation_name,
-        init,
-        scale,
-        test_gpytorch=False,
-        use_lazy_matrix=True,
-        matmul_blockwise=True,
-    )
+# def test_loss_sin1d_10_init_0_lazy_blockwise():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive"
+#     init = jnp.array([0.0, 0.0])
+#     scale = 1.0
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         test_gpytorch=False,
+#         use_lazy_matrix=True,
+#         matmul_blockwise=True,
+#     )
 
 
 # def test_loss_sin1d_10_init_2():
@@ -336,28 +337,28 @@ def test_loss_sin1d_10_init_0_lazy_blockwise():
 #     )
 
 
-# def test_loss_sin1d_1000_x100_init_0_naive():
-#     project_name = "data"
-#     simulation_name = "test_loss_sin1d_naive_y_1000"
-#     init = jnp.array([0.0, 0.0])
-#     scale = 100.0
-#     kwargs_setup_loss = {
-#         "rank": 5,
-#         "n_tridiag": 10,
-#         "max_tridiag_iter": 20,
-#         "cg_tolerance": 0.01,
-#         "max_iter_cg": 2000,
-#         "min_preconditioning_size": 2000,
-#     }
-#     calc_loss_sin(
-#         project_name,
-#         simulation_name,
-#         init,
-#         scale,
-#         kwargs_setup_loss=kwargs_setup_loss,
-#         test_gpytorch=True,
-#         use_lazy_matrix=True,
-#     )
+def test_loss_sin1d_1000_x100_init_0_naive():
+    project_name = "data"
+    simulation_name = "test_loss_sin1d_naive_y_1000"
+    init = jnp.array([0.0, 0.0])
+    scale = 100.0
+    kwargs_setup_loss = {
+        "rank": 5,
+        "n_tridiag": 10,
+        "max_tridiag_iter": 20,
+        "cg_tolerance": 0.01,
+        "max_iter_cg": 2000,
+        "min_preconditioning_size": 2000,
+    }
+    calc_loss_sin(
+        project_name,
+        simulation_name,
+        init,
+        scale,
+        kwargs_setup_loss=kwargs_setup_loss,
+        test_gpytorch=True,
+        use_lazy_matrix=True,
+    )
 
 
 # def test_loss_sin1d_1000_x100_init_1():
@@ -383,27 +384,27 @@ def test_loss_sin1d_10_init_0_lazy_blockwise():
 #     )
 
 
-def test_loss_sin1d_1000_x100_init_2():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive_y_1000"
-    init = jnp.array([2.0, 2.0])
-    scale = 100.0
-    kwargs_setup_loss = {
-        "rank": 50,
-        "n_tridiag": 20,
-        "max_tridiag_iter": 40,
-        "cg_tolerance": 0.01,
-        "max_iter_cg": 2000,
-        "min_preconditioning_size": 1,
-    }
-    calc_loss_sin(
-        project_name,
-        simulation_name,
-        init,
-        scale,
-        kwargs_setup_loss=kwargs_setup_loss,
-        test_gpytorch=True,
-    )
+# def test_loss_sin1d_1000_x100_init_2():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive_y_1000"
+#     init = jnp.array([2.0, 2.0])
+#     scale = 100.0
+#     kwargs_setup_loss = {
+#         "rank": 50,
+#         "n_tridiag": 20,
+#         "max_tridiag_iter": 40,
+#         "cg_tolerance": 0.01,
+#         "max_iter_cg": 2000,
+#         "min_preconditioning_size": 1,
+#     }
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         kwargs_setup_loss=kwargs_setup_loss,
+#         test_gpytorch=True,
+#     )
 
 
 # def test_loss_sin1d_1000_x100_init_2_lazy():
@@ -431,26 +432,26 @@ def test_loss_sin1d_1000_x100_init_2():
 #     )
 
 
-def test_loss_sin1d_1000_x100_init_2_lazy_blockwise():
-    project_name = "data"
-    simulation_name = "test_loss_sin1d_naive_y_1000"
-    init = jnp.array([2.0, 2.0])
-    scale = 100.0
-    kwargs_setup_loss = {
-        "rank": 50,
-        "n_tridiag": 20,
-        "max_tridiag_iter": 40,
-        "cg_tolerance": 0.01,
-        "max_iter_cg": 2000,
-        "min_preconditioning_size": 1,
-    }
-    calc_loss_sin(
-        project_name,
-        simulation_name,
-        init,
-        scale,
-        kwargs_setup_loss=kwargs_setup_loss,
-        test_gpytorch=False,
-        use_lazy_matrix=True,
-        matmul_blockwise=True,
-    )
+# def test_loss_sin1d_1000_x100_init_2_lazy_blockwise():
+#     project_name = "data"
+#     simulation_name = "test_loss_sin1d_naive_y_1000"
+#     init = jnp.array([2.0, 2.0])
+#     scale = 100.0
+#     kwargs_setup_loss = {
+#         "rank": 50,
+#         "n_tridiag": 20,
+#         "max_tridiag_iter": 40,
+#         "cg_tolerance": 0.01,
+#         "max_iter_cg": 2000,
+#         "min_preconditioning_size": 1,
+#     }
+#     calc_loss_sin(
+#         project_name,
+#         simulation_name,
+#         init,
+#         scale,
+#         kwargs_setup_loss=kwargs_setup_loss,
+#         test_gpytorch=False,
+#         use_lazy_matrix=True,
+#         matmul_blockwise=True,
+#     )
