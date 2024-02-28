@@ -13,7 +13,7 @@ jobs:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
       - uses: actions/checkout@v1
-      - run: pip install -r requirements.txt
+      # - run: pip install -r requirements.txt
       - name: Sphinx build
         run: sphinx-apidoc -f -o docs/source/ src/
       - name: Make HTML
