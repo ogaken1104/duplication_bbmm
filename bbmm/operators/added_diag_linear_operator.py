@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+from typing import Union
 
 from bbmm.operators.sum_linear_operator import SumLinearOp
 from bbmm.operators._linear_operator import LinearOp
@@ -23,7 +24,7 @@ class AddedDiagLinearOp(SumLinearOp):
         https://arxiv.org/abs/1809.11165
     """
 
-    def __init__(self, *linear_ops: [LinearOp, DiagLinearOp]):
+    def __init__(self, *linear_ops: Union[LinearOp, DiagLinearOp]):
         linear_ops = list(linear_ops)
         super().__init__(*linear_ops)
         self._linear_op = linear_ops[0]
