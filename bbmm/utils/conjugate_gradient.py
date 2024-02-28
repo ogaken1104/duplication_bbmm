@@ -53,18 +53,18 @@ def mpcg_bbmm(
     Solve
 
     Args:
-        - A (jnp.ndarray or LinearOp): matrix represents lhs
-        - rhs (jnp.ndarray): matrix represents rhs, which is comprised of [probe_vectors, y]
-        - max_iter_cg (int): maximum number of iteration for conjugate gradient
-        - tolerance (float): l2 norm tolerance for residual
-        - print_process (bool): if print optimization detail at each step
-        - eps (float): norm less than this is considered to be 0
-        - n_tridiag (int): number of the first columns of rhs to be tridiagonalized (number of probe vectors)
-        - max_tridiag_iter (int): maximum size of the tridiagonalization matrix
+        A (jnp.ndarray or LinearOp): matrix represents lhs
+        rhs (jnp.ndarray): matrix represents rhs, which is comprised of [probe_vectors, y]
+        max_iter_cg (int): maximum number of iteration for conjugate gradient
+        tolerance (float): l2 norm tolerance for residual
+        print_process (bool): if print optimization detail at each step
+        eps (float): norm less than this is considered to be 0
+        n_tridiag (int): number of the first columns of rhs to be tridiagonalized (number of probe vectors)
+        max_tridiag_iter (int): maximum size of the tridiagonalization matrix
 
     Returns:
-        - u (jnp.ndarray): result of solving the eq. the leftmost columns is K^{-1}y
-        - t_mat (jnp.ndarray): corresponding tridiagonal matrices (if n_tridiag > 0)
+        u (jnp.ndarray): result of solving the eq. the leftmost columns is K^{-1}y
+        t_mat (jnp.ndarray): corresponding tridiagonal matrices (if n_tridiag > 0)
     """
     if not precondition:
         precondition = precondition_identity

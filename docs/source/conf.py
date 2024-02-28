@@ -45,3 +45,7 @@ source_suffix = {
     ".txt": "markdown",
     ".md": "markdown",
 }
+
+masetr_doc = "index.md"
+
+napoleon_custom_sections = [("Returns", "params_style")]
