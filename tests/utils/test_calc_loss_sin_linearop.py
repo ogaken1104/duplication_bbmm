@@ -1,10 +1,11 @@
 import inspect
-import numpy as np
+import time
+
 import jax
 import jax.numpy as jnp
+import numpy as np
 from jax import grad, jit
 from jax.config import config
-import time
 
 config.update("jax_enable_x64", True)
 
@@ -12,17 +13,16 @@ import warnings
 
 warnings.filterwarnings("always")
 
-from bbmm.utils import calc_loss_dloss_linearop, test_modules
-
-
 # import stopro.solver.optimizers as optimizers
 import stopro.GP.gp_naive as gp_1D_naive
 from stopro.data_handler.data_handle_module import HdfOperator
+from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
 from stopro.GP.kernels import define_kernel
+from stopro.sub_modules.init_modules import get_init
 from stopro.sub_modules.load_modules import load_data, load_params
 from stopro.sub_modules.loss_modules import hessian, logposterior
-from stopro.sub_modules.init_modules import get_init
-from stopro.GP.gp_sinusoidal_independent import GPSinusoidalWithoutPIndependent
+
+from bbmm.utils import calc_loss_dloss_linearop, test_modules
 
 #########
 
@@ -44,6 +44,8 @@ def calc_loss_sin(
     test_cholesky=True,
     test_ours=True,
     gp_class=gp_1D_naive.GPmodelNaive,
+    return_time=False,
+    seed=0,
 ):
     if test_gpytorch:
         import gpytorch
@@ -130,6 +132,7 @@ def calc_loss_sin(
             return_yKinvy=True,
             use_lazy_matrix=use_lazy_matrix,
             matmul_blockwise=matmul_blockwise,
+            seed=seed,
             **kwargs_setup_loss,
         )
 
@@ -142,7 +145,8 @@ def calc_loss_sin(
             init, *args_predict[2:]
         )
         end_time = time.time()
-        print(f"\ntime for loss and dloss (ours):  {end_time - start_time:.2e} sec")
+        time_ours = end_time - start_time
+        print(f"\ntime for loss and dloss (ours):  {time_ours:.2e} sec")
 
     if test_cholesky:
         ## compilation
@@ -152,12 +156,14 @@ def calc_loss_sin(
         loss_cholesky = func(init, *args_predict[2:]) / len(K)
         dloss_cholesky = dfunc(init, *args_predict[2:]) / len(K)
         end_time = time.time()
-        print(f"time for loss and dloss (cholesky):  {end_time - start_time:.2e} sec\n")
+        time_cholesky = end_time - start_time
+        print(f"time for loss and dloss (cholesky):  {time_cholesky:.2e} sec\n")
         yKinvy_cholesky = gp_model._calc_yKinvy(init, *args_predict[2:])
         yKdKKy_cholesky = gp_model._calc_yKdKKy(init, *args_predict[2:])
 
     ## check gpytorch
     if test_gpytorch:
+        torch.manual_seed(seed)
         # set parameters same for ours
         test_modules.set_linear_operator_settings(kwargs_setup_loss)
 
@@ -216,7 +222,8 @@ def calc_loss_sin(
             np.array([np.squeeze(d.detach().numpy()) for d in dloss_torch]),
         )
         end_time = time.time()
-        print(f"\ntime for loss and dloss (gpytorch):  {end_time - start_time:.2e} sec")
+        time_torch = end_time - start_time
+        print(f"\ntime for loss and dloss (gpytorch):  {time_torch:.2e} sec")
     if test_ours:
         print(f"yKinvy ours: {yKinvy_ours:.1e}")
     if test_cholesky:
@@ -265,6 +272,13 @@ def calc_loss_sin(
     if test_cholesky:
         assert aerr_loss_ours < atol
         assert aerr_dloss_ours < atol
+    
+    if return_time:
+        if test_cholesky:
+            return time_ours,time_torch,  time_cholesky, 
+        else:
+            return time_ours, time_torch
+        
 
 
 # def test_loss_sin1d_10_init_0():
