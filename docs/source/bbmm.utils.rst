@@ -1,0 +1,93 @@
+bbmm.utils package
+==================
+
+Submodules
+----------
+
+bbmm.utils.calc\_logdet module
+------------------------------
+
+.. automodule:: bbmm.utils.calc_logdet
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.calc\_loss\_dloss module
+-----------------------------------
+
+.. automodule:: bbmm.utils.calc_loss_dloss
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.calc\_loss\_dloss\_linearop module
+---------------------------------------------
+
+.. automodule:: bbmm.utils.calc_loss_dloss_linearop
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.calc\_prediction module
+----------------------------------
+
+.. automodule:: bbmm.utils.calc_prediction
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.calc\_prediction\_linearop module
+--------------------------------------------
+
+.. automodule:: bbmm.utils.calc_prediction_linearop
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.calc\_trace module
+-----------------------------
+
+.. automodule:: bbmm.utils.calc_trace
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.conjugate\_gradient module
+-------------------------------------
+
+.. automodule:: bbmm.utils.conjugate_gradient
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.mmm module
+---------------------
+
+.. automodule:: bbmm.utils.mmm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.preconditioner module
+--------------------------------
+
+.. automodule:: bbmm.utils.preconditioner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bbmm.utils.test\_modules module
+-------------------------------
+
+.. automodule:: bbmm.utils.test_modules
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: bbmm.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
