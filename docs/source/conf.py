@@ -2,10 +2,7 @@ import sys
 from pathlib import Path
 
 root_path = Path(__file__).parent.parent.parent
-sys.path.insert(
-    0, str(root_path.absolute())
-)  # Sphinxがライブラリを探索できるようにパスを追加
-
+sys.path.insert(0, str(root_path.absolute()))
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -38,10 +35,9 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_theme = 'alabaster'
+# html_theme = "alabaster"
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
-
+# html_static_path = ["_static"]
 
 # Sphinxで扱うファイル形式を定義
 source_suffix = {
