@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bbmm.utils package &mdash; bbmm 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            bbmm
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">bbmm.utils package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bbmm.utils.calc_logdet">bbmm.utils.calc_logdet module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.calc_logdet.calc_logdet"><code class="docutils literal notranslate"><span class="pre">calc_logdet()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.calc_logdet.lanczos_tridiag_to_diag"><code class="docutils literal notranslate"><span class="pre">lanczos_tridiag_to_diag()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.calc_logdet.to_dense"><code class="docutils literal notranslate"><span class="pre">to_dense()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.calc_loss_dloss">bbmm.utils.calc_loss_dloss module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.calc_loss_dloss.setup_loss_dloss_mpcg"><code class="docutils literal notranslate"><span class="pre">setup_loss_dloss_mpcg()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.calc_loss_dloss_linearop">bbmm.utils.calc_loss_dloss_linearop module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.calc_loss_dloss_linearop.setup_loss_dloss_mpcg"><code class="docutils literal notranslate"><span class="pre">setup_loss_dloss_mpcg()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.calc_prediction">bbmm.utils.calc_prediction module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.calc_prediction.setup_predictor_mpcg"><code class="docutils literal notranslate"><span class="pre">setup_predictor_mpcg()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.calc_prediction_linearop">bbmm.utils.calc_prediction_linearop module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.calc_prediction_linearop.setup_predictor_mpcg"><code class="docutils literal notranslate"><span class="pre">setup_predictor_mpcg()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.calc_trace">bbmm.utils.calc_trace module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.calc_trace.calc_trace"><code class="docutils literal notranslate"><span class="pre">calc_trace()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.conjugate_gradient">bbmm.utils.conjugate_gradient module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.conjugate_gradient.bcg_bbmm"><code class="docutils literal notranslate"><span class="pre">bcg_bbmm()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.conjugate_gradient.cg_bbmm"><code class="docutils literal notranslate"><span class="pre">cg_bbmm()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.conjugate_gradient.less_than_for_arr"><code class="docutils literal notranslate"><span class="pre">less_than_for_arr()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.conjugate_gradient.mpcg_bbmm"><code class="docutils literal notranslate"><span class="pre">mpcg_bbmm()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.conjugate_gradient.precondition_identity"><code class="docutils literal notranslate"><span class="pre">precondition_identity()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.mmm">bbmm.utils.mmm module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.mmm.mmm"><code class="docutils literal notranslate"><span class="pre">mmm()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.mmm.setup_mmm_K"><code class="docutils literal notranslate"><span class="pre">setup_mmm_K()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.mmm.setup_mmm_dKdtheta"><code class="docutils literal notranslate"><span class="pre">setup_mmm_dKdtheta()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.preconditioner">bbmm.utils.preconditioner module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.preconditioner.setup_preconditioner"><code class="docutils literal notranslate"><span class="pre">setup_preconditioner()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils.test_modules">bbmm.utils.test_modules module</a><ul>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.check_cholesky_inverse_accuracy"><code class="docutils literal notranslate"><span class="pre">check_cholesky_inverse_accuracy()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.check_cond"><code class="docutils literal notranslate"><span class="pre">check_cond()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.generate_K"><code class="docutils literal notranslate"><span class="pre">generate_K()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.is_positive_definite"><code class="docutils literal notranslate"><span class="pre">is_positive_definite()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.rel_error"><code class="docutils literal notranslate"><span class="pre">rel_error()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.rel_error_scaler"><code class="docutils literal notranslate"><span class="pre">rel_error_scaler()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.utils.test_modules.set_linear_operator_settings"><code class="docutils literal notranslate"><span class="pre">set_linear_operator_settings()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bbmm</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">bbmm.utils package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bbmm.utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bbmm-utils-package">
+<h1>bbmm.utils package<a class="headerlink" href="#bbmm-utils-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bbmm.utils.calc_logdet">
+<span id="bbmm-utils-calc-logdet-module"></span><h2>bbmm.utils.calc_logdet module<a class="headerlink" href="#module-bbmm.utils.calc_logdet" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_logdet.calc_logdet">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_logdet.</span></span><span class="sig-name descname"><span class="pre">calc_logdet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precond_logdet_cache</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_logdet.html#calc_logdet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_logdet.calc_logdet" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_logdet.lanczos_tridiag_to_diag">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_logdet.</span></span><span class="sig-name descname"><span class="pre">lanczos_tridiag_to_diag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_mat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_logdet.html#lanczos_tridiag_to_diag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_logdet.lanczos_tridiag_to_diag" title="Link to this definition"></a></dt>
+<dd><p>duplication of lanczos_tridiag_to_diag in lanczos.py
+<a class="reference external" href="https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/utils/lanczos.py#L4">https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/utils/lanczos.py#L4</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_logdet.to_dense">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_logdet.</span></span><span class="sig-name descname"><span class="pre">to_dense</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigenvalues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigenvectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">funcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_logdet.html#to_dense"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_logdet.to_dense" title="Link to this definition"></a></dt>
+<dd><p>duplicated from linear_operator.utils.stochastic_lq.py
+<a class="reference external" href="https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/utils/stochastic_lq.py#L4">https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/utils/stochastic_lq.py#L4</a></p>
+</dd></dl>
+
+</section>
+<section id="module-bbmm.utils.calc_loss_dloss">
+<span id="bbmm-utils-calc-loss-dloss-module"></span><h2>bbmm.utils.calc_loss_dloss module<a class="headerlink" href="#module-bbmm.utils.calc_loss_dloss" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_loss_dloss.setup_loss_dloss_mpcg">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_loss_dloss.</span></span><span class="sig-name descname"><span class="pre">setup_loss_dloss_mpcg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_tridiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cg_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tridiag_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_preconditioning_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_yKinvy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_loss_dloss.html#setup_loss_dloss_mpcg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_loss_dloss.setup_loss_dloss_mpcg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bbmm.utils.calc_loss_dloss_linearop">
+<span id="bbmm-utils-calc-loss-dloss-linearop-module"></span><h2>bbmm.utils.calc_loss_dloss_linearop module<a class="headerlink" href="#module-bbmm.utils.calc_loss_dloss_linearop" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_loss_dloss_linearop.setup_loss_dloss_mpcg">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_loss_dloss_linearop.</span></span><span class="sig-name descname"><span class="pre">setup_loss_dloss_mpcg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_tridiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cg_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tridiag_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_preconditioning_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_yKinvy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_lazy_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matmul_blockwise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_loss_dloss_linearop.html#setup_loss_dloss_mpcg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_loss_dloss_linearop.setup_loss_dloss_mpcg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bbmm.utils.calc_prediction">
+<span id="bbmm-utils-calc-prediction-module"></span><h2>bbmm.utils.calc_prediction module<a class="headerlink" href="#module-bbmm.utils.calc_prediction" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_prediction.setup_predictor_mpcg">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_prediction.</span></span><span class="sig-name descname"><span class="pre">setup_predictor_mpcg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_tridiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tridiag_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_preconditioning_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_prediction.html#setup_predictor_mpcg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_prediction.setup_predictor_mpcg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bbmm.utils.calc_prediction_linearop">
+<span id="bbmm-utils-calc-prediction-linearop-module"></span><h2>bbmm.utils.calc_prediction_linearop module<a class="headerlink" href="#module-bbmm.utils.calc_prediction_linearop" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_prediction_linearop.setup_predictor_mpcg">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_prediction_linearop.</span></span><span class="sig-name descname"><span class="pre">setup_predictor_mpcg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_tridiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tridiag_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_preconditioning_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_lazy_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matmul_blockwise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_prediction_linearop.html#setup_predictor_mpcg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_prediction_linearop.setup_predictor_mpcg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bbmm.utils.calc_trace">
+<span id="bbmm-utils-calc-trace-module"></span><h2>bbmm.utils.calc_trace module<a class="headerlink" href="#module-bbmm.utils.calc_trace" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.calc_trace.calc_trace">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.calc_trace.</span></span><span class="sig-name descname"><span class="pre">calc_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Kinvy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dKdtheta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_tridiag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precondition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/calc_trace.html#calc_trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.calc_trace.calc_trace" title="Link to this definition"></a></dt>
+<dd><p>function to calculate trace term</p>
+</dd></dl>
+
+</section>
+<section id="module-bbmm.utils.conjugate_gradient">
+<span id="bbmm-utils-conjugate-gradient-module"></span><h2>bbmm.utils.conjugate_gradient module<a class="headerlink" href="#module-bbmm.utils.conjugate_gradient" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.conjugate_gradient.bcg_bbmm">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.conjugate_gradient.</span></span><span class="sig-name descname"><span class="pre">bcg_bbmm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precondition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/conjugate_gradient.html#bcg_bbmm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.conjugate_gradient.bcg_bbmm" title="Link to this definition"></a></dt>
+<dd><p>function to chekck if we can implement batched preconditioned conjuaget gradient Algorithm 2 except for calculating T.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.conjugate_gradient.cg_bbmm">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.conjugate_gradient.</span></span><span class="sig-name descname"><span class="pre">cg_bbmm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precondition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_updating_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/conjugate_gradient.html#cg_bbmm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.conjugate_gradient.cg_bbmm" title="Link to this definition"></a></dt>
+<dd><p>function to check if we can use simple preconditiond conjugate gradient (PCG) in Algorithm 1, Appendix A.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.conjugate_gradient.less_than_for_arr">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.conjugate_gradient.</span></span><span class="sig-name descname"><span class="pre">less_than_for_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bool_less_than</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/conjugate_gradient.html#less_than_for_arr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.conjugate_gradient.less_than_for_arr" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.conjugate_gradient.mpcg_bbmm">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.conjugate_gradient.</span></span><span class="sig-name descname"><span class="pre">mpcg_bbmm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">LinearOp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precondition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_cg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_process</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_tridiag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tridiag_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_updating_after</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bbmm/utils/conjugate_gradient.html#mpcg_bbmm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.conjugate_gradient.mpcg_bbmm" title="Link to this definition"></a></dt>
+<dd><p>function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A. (Gardner et al, 2018 <a class="reference external" href="https://arxiv.org/abs/1809.11165">https://arxiv.org/abs/1809.11165</a>)</p>
+<p>Implements the linear conjugate gradients method for (approximately) solving systems of the form</p>
+<blockquote>
+<div><p>lhs result = rhs</p>
+</div></blockquote>
+<p>for positive definite and symmetric matrices.</p>
+<p>Solve</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>-</em>) – matrix represents lhs</p></li>
+<li><p><strong>rhs</strong> (<em>-</em>) – matrix represents rhs, which is comprised of [probe_vectors, y]</p></li>
+<li><p><strong>max_iter_cg</strong> (<em>-</em>) – maximum number of iteration for conjugate gradient</p></li>
+<li><p><strong>tolerance</strong> (<em>-</em>) – l2 norm tolerance for residual</p></li>
+<li><p><strong>print_process</strong> (<em>-</em>) – if print optimization detail at each step</p></li>
+<li><p><strong>eps</strong> (<em>-</em>) – norm less than this is considered to be 0</p></li>
+<li><p><strong>n_tridiag</strong> (<em>-</em>) – number of the first columns of rhs to be tridiagonalized (number of probe vectors)</p></li>
+<li><p><strong>max_tridiag_iter</strong> (<em>-</em>) – maximum size of the tridiagonalization matrix</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>result of solving the eq. the leftmost columns is K^{-1}y
+- t_mat (jnp.ndarray): corresponding tridiagonal matrices (if n_tridiag &gt; 0)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p>u (jnp.ndarray)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.conjugate_gradient.precondition_identity">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.conjugate_gradient.</span></span><span class="sig-name descname"><span class="pre">precondition_identity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">residual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/conjugate_gradient.html#precondition_identity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.conjugate_gradient.precondition_identity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bbmm.utils.mmm">
+<span id="bbmm-utils-mmm-module"></span><h2>bbmm.utils.mmm module<a class="headerlink" href="#module-bbmm.utils.mmm" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.mmm.mmm">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.mmm.</span></span><span class="sig-name descname"><span class="pre">mmm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r1s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Kss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sec2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jiggle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/mmm.html#mmm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.mmm.mmm" title="Link to this definition"></a></dt>
+<dd><p>function to calculate matrix-matrix multiplication K(r1s, r2s) &#64; right_matrix</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.mmm.setup_mmm_K">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.mmm.</span></span><span class="sig-name descname"><span class="pre">setup_mmm_K</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_train</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GPmodel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jiggle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/mmm.html#setup_mmm_K"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.mmm.setup_mmm_K" title="Link to this definition"></a></dt>
+<dd><p>setup function to calculate covariance matrix x right_matrix.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.mmm.setup_mmm_dKdtheta">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.mmm.</span></span><span class="sig-name descname"><span class="pre">setup_mmm_dKdtheta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_train</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GPmodel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jiggle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/mmm.html#setup_mmm_dKdtheta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.mmm.setup_mmm_dKdtheta" title="Link to this definition"></a></dt>
+<dd><p>setup function to calculate derivative of covariance matrix x right_matrix</p>
+<p>TODO This implementaion is not efficient because it takes derivatives of K x right_matrix. It is better to first take derivatives of K and next multiply with right_matrix.</p>
+</dd></dl>
+
+</section>
+<section id="module-bbmm.utils.preconditioner">
+<span id="bbmm-utils-preconditioner-module"></span><h2>bbmm.utils.preconditioner module<a class="headerlink" href="#module-bbmm.utils.preconditioner" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.preconditioner.setup_preconditioner">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.preconditioner.</span></span><span class="sig-name descname"><span class="pre">setup_preconditioner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix:</span> <span class="pre">~jax._src.numpy.lax_numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_preconditioning_size:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func_pivoted_cholesky:</span> <span class="pre">callable</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">pivoted_cholesky_numpy&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/preconditioner.html#setup_preconditioner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.preconditioner.setup_preconditioner" title="Link to this definition"></a></dt>
+<dd><p>function to setup preconditioner
+most is dupricated from
+- added_diag_linear_operator.py
+<a class="reference external" href="https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/operators/added_diag_linear_operator.py#L4">https://github.com/cornellius-gp/linear_operator/blob/54962429ab89e2a9e519de6da8853513236b283b/linear_operator/operators/added_diag_linear_operator.py#L4</a></p>
+</dd></dl>
+
+</section>
+<section id="module-bbmm.utils.test_modules">
+<span id="bbmm-utils-test-modules-module"></span><h2>bbmm.utils.test_modules module<a class="headerlink" href="#module-bbmm.utils.test_modules" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.check_cholesky_inverse_accuracy">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">check_cholesky_inverse_accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#check_cholesky_inverse_accuracy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.check_cholesky_inverse_accuracy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.check_cond">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">check_cond</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#check_cond"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.check_cond" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.generate_K">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">generate_K</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#generate_K"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.generate_K" title="Link to this definition"></a></dt>
+<dd><p>generate positive definite symmetric matrix</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.is_positive_definite">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">is_positive_definite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#is_positive_definite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.is_positive_definite" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.rel_error">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">rel_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#rel_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.rel_error" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.rel_error_scaler">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">rel_error_scaler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#rel_error_scaler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.rel_error_scaler" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bbmm.utils.test_modules.set_linear_operator_settings">
+<span class="sig-prename descclassname"><span class="pre">bbmm.utils.test_modules.</span></span><span class="sig-name descname"><span class="pre">set_linear_operator_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs_setup_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_lazy_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bbmm/utils/test_modules.html#set_linear_operator_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bbmm.utils.test_modules.set_linear_operator_settings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bbmm.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bbmm.utils" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kenta Ogawa.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
