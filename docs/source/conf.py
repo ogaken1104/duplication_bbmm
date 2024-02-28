@@ -37,7 +37,7 @@ exclude_patterns = []
 
 # html_theme = "alabaster"
 html_theme = "sphinx_rtd_theme"
-# html_static_path = ["_static"]
+html_static_path = ["_static"]
 
 # Sphinxで扱うファイル形式を定義
 source_suffix = {
