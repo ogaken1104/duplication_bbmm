@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bbmm.utils.test_modules &mdash; bbmm 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            bbmm
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bbmm</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bbmm.utils.test_modules</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bbmm.utils.test_modules</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">linear_operator</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="generate_K">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.generate_K">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_K</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    generate positive definite symmetric matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">),</span> <span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
+    <span class="n">K</span> <span class="o">+=</span> <span class="p">(</span><span class="n">noise</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_positive_definite</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;K is not positive definite !&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">K</span></div>
+
+
+
+<div class="viewcode-block" id="is_positive_definite">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.is_positive_definite">[docs]</a>
+<span class="k">def</span> <span class="nf">is_positive_definite</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
+    <span class="c1"># 行列の固有値を計算</span>
+    <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvals</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+
+    <span class="c1"># 全ての固有値が正であるかをチェック</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">eigenvalues</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="check_cond">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.check_cond">[docs]</a>
+<span class="k">def</span> <span class="nf">check_cond</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
+    <span class="n">cond_num</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cond. #: </span><span class="si">{</span><span class="n">cond_num</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cond_num</span></div>
+
+
+
+<div class="viewcode-block" id="rel_error">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.rel_error">[docs]</a>
+<span class="k">def</span> <span class="nf">rel_error</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">zero_threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">zero_threshold</span><span class="p">:</span>
+        <span class="n">nonzero_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">true</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">zero_threshold</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nonzero_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">true</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">true</span> <span class="o">=</span> <span class="n">true</span><span class="p">[</span><span class="n">nonzero_index</span><span class="p">]</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">nonzero_index</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">true</span> <span class="o">-</span> <span class="n">pred</span><span class="p">)</span> <span class="o">/</span> <span class="n">true</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="rel_error_scaler">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.rel_error_scaler">[docs]</a>
+<span class="k">def</span> <span class="nf">rel_error_scaler</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">pred</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">true</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;truth value is zero&quot;</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">true</span> <span class="o">-</span> <span class="n">pred</span><span class="p">)</span> <span class="o">/</span> <span class="n">true</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="check_cholesky_inverse_accuracy">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.check_cholesky_inverse_accuracy">[docs]</a>
+<span class="k">def</span> <span class="nf">check_cholesky_inverse_accuracy</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+    <span class="n">I_reconstructed</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">K</span><span class="p">))</span>
+    <span class="n">I_reconstructed</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">I_reconstructed</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_linear_operator_settings">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.test_modules.set_linear_operator_settings">[docs]</a>
+<span class="k">def</span> <span class="nf">set_linear_operator_settings</span><span class="p">(</span><span class="n">kwargs_setup_loss</span><span class="p">,</span> <span class="n">use_lazy_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cg_tolerance</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span><span class="n">kwargs_setup_loss</span><span class="p">[</span><span class="s2">&quot;max_iter_cg&quot;</span><span class="p">])</span>
+    <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">min_preconditioning_size</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span>
+        <span class="n">kwargs_setup_loss</span><span class="p">[</span><span class="s2">&quot;min_preconditioning_size&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cg_tolerance</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span><span class="n">kwargs_setup_loss</span><span class="p">[</span><span class="s2">&quot;cg_tolerance&quot;</span><span class="p">])</span>
+    <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">num_trace_samples</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span>
+        <span class="n">kwargs_setup_loss</span><span class="p">[</span><span class="s2">&quot;n_tridiag&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">max_lanczos_quadrature_iterations</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span>
+        <span class="n">kwargs_setup_loss</span><span class="p">[</span><span class="s2">&quot;max_tridiag_iter&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">max_preconditioner_size</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span>
+        <span class="n">kwargs_setup_loss</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_lazy_matrix</span><span class="p">:</span>
+        <span class="n">linear_operator</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">max_cholesky_size</span><span class="o">.</span><span class="n">_set_value</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kenta Ogawa.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

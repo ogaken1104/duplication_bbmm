@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bbmm.utils.conjugate_gradient &mdash; bbmm 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            bbmm
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">bbmm</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bbmm.utils.conjugate_gradient</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bbmm.utils.conjugate_gradient</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">lax</span><span class="p">,</span> <span class="n">vmap</span>
+
+<span class="kn">from</span> <span class="nn">bbmm.operators._linear_operator</span> <span class="kn">import</span> <span class="n">LinearOp</span>
+
+
+<div class="viewcode-block" id="precondition_identity">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.conjugate_gradient.precondition_identity">[docs]</a>
+<span class="k">def</span> <span class="nf">precondition_identity</span><span class="p">(</span><span class="n">residual</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">residual</span></div>
+
+
+
+<div class="viewcode-block" id="less_than_for_arr">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.conjugate_gradient.less_than_for_arr">[docs]</a>
+<span class="nd">@jit</span>
+<span class="k">def</span> <span class="nf">less_than_for_arr</span><span class="p">(</span><span class="n">arr</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">bool_less_than</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">less_than_for_val</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
+        <span class="n">val</span><span class="p">,</span> <span class="n">bool_less_than</span> <span class="o">=</span> <span class="n">xs</span>
+
+        <span class="k">def</span> <span class="nf">cond</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">eps</span>
+
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">bool_less_than</span><span class="p">,</span> <span class="n">cond</span><span class="p">,</span> <span class="n">cond</span><span class="p">,</span> <span class="n">operand</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="n">xs</span> <span class="o">=</span> <span class="p">[</span><span class="n">arr</span><span class="p">,</span> <span class="n">bool_less_than</span><span class="p">]</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">bool_less_than</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">less_than_for_val</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">xs</span><span class="o">=</span><span class="n">xs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bool_less_than</span></div>
+
+
+
+<div class="viewcode-block" id="mpcg_bbmm">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.conjugate_gradient.mpcg_bbmm">[docs]</a>
+<span class="k">def</span> <span class="nf">mpcg_bbmm</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">LinearOp</span><span class="p">],</span>
+    <span class="n">rhs</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">precondition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_iter_cg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">print_process</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+    <span class="n">n_tridiag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_tridiag_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="c1"># return_iter_cg: bool = False,</span>
+    <span class="n">stop_updating_after</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;function to implement modified preconditiond conjugate gradient (mPCG) in Algorithm 2, Appendix A. (Gardner et al, 2018 https://arxiv.org/abs/1809.11165)</span>
+
+<span class="sd">    Implements the linear conjugate gradients method for (approximately) solving systems of the form</span>
+
+<span class="sd">        lhs result = rhs</span>
+
+<span class="sd">    for positive definite and symmetric matrices.</span>
+
+<span class="sd">    Solve</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        - A (jnp.ndarray or LinearOp): matrix represents lhs</span>
+<span class="sd">        - rhs (jnp.ndarray): matrix represents rhs, which is comprised of [probe_vectors, y]</span>
+<span class="sd">        - max_iter_cg (int): maximum number of iteration for conjugate gradient</span>
+<span class="sd">        - tolerance (float): l2 norm tolerance for residual</span>
+<span class="sd">        - print_process (bool): if print optimization detail at each step</span>
+<span class="sd">        - eps (float): norm less than this is considered to be 0</span>
+<span class="sd">        - n_tridiag (int): number of the first columns of rhs to be tridiagonalized (number of probe vectors)</span>
+<span class="sd">        - max_tridiag_iter (int): maximum size of the tridiagonalization matrix</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        - u (jnp.ndarray): result of solving the eq. the leftmost columns is K^{-1}y</span>
+<span class="sd">        - t_mat (jnp.ndarray): corresponding tridiagonal matrices (if n_tridiag &gt; 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">precondition</span><span class="p">:</span>
+        <span class="n">precondition</span> <span class="o">=</span> <span class="n">precondition_identity</span>
+
+    <span class="k">if</span> <span class="n">n_tridiag</span><span class="p">:</span>
+        <span class="n">num_rows</span> <span class="o">=</span> <span class="n">rhs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">n_tridiag_iter</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_tridiag_iter</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">)</span>
+    <span class="c1">### initial setting</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>  <span class="c1">## current solution</span>
+
+    <span class="c1"># Get the norm of the rhs - used for convergence checks</span>
+    <span class="c1"># Here we&#39;re going to make almost-zero norms actually be 1 (so we don&#39;t get divide-by-zero issues)</span>
+    <span class="c1"># But we&#39;ll store which norms were actually close to zero</span>
+    <span class="c1">## TODO implement this respectively for columns</span>
+    <span class="n">rhs_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">rhs_is_zero</span> <span class="o">=</span> <span class="n">rhs_norm</span> <span class="o">&lt;</span> <span class="n">eps</span>
+    <span class="n">rhs_norm</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">rhs_is_zero</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rhs_norm</span><span class="p">)),</span> <span class="n">rhs_norm</span><span class="p">)</span>
+    <span class="n">rhs</span> <span class="o">=</span> <span class="n">rhs</span> <span class="o">/</span> <span class="n">rhs_norm</span>
+
+    <span class="c1">## current residual</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">LinearOp</span><span class="p">):</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">rhs</span> <span class="o">-</span> <span class="n">A</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">rhs</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+
+    <span class="c1"># Sometime we&#39;re lucky and the preconditioner solves the system right away</span>
+    <span class="c1"># Check for convergence</span>
+    <span class="n">r0_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">has_converged</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">r0_norm</span> <span class="o">&lt;</span> <span class="n">stop_updating_after</span>
+    <span class="p">)</span>  <span class="c1"># at this point normal &quot;&lt;&quot; can be used, because we do not jit entirely, in future we should use lax.select</span>
+
+    <span class="n">z0</span> <span class="o">=</span> <span class="n">precondition</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>  <span class="c1">## preconditioned residual</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">z0</span>  <span class="c1">## search direction for next solution</span>
+
+    <span class="c1">## for tridiag</span>
+    <span class="k">if</span> <span class="n">n_tridiag</span><span class="p">:</span>
+        <span class="n">t_mat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_tridiag_iter</span><span class="p">,</span> <span class="n">n_tridiag_iter</span><span class="p">,</span> <span class="n">n_tridiag</span><span class="p">))</span>
+        <span class="c1"># alpha_tridiag_is_zero = jnp.empty(n_tridiag)</span>
+        <span class="n">alpha_reciprocal</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_tridiag</span><span class="p">)</span>
+        <span class="n">prev_alpha_reciprocal</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">alpha_reciprocal</span><span class="p">)</span>
+        <span class="n">prev_beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">alpha_reciprocal</span><span class="p">)</span>
+    <span class="n">update_tridiag</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1">## our own implementation</span>
+    <span class="n">is_zero</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_linear_cg_updates</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">n_tridiag</span><span class="p">,</span> <span class="n">is_zero</span><span class="p">):</span>
+        <span class="n">zeros_num_rhs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ones_num_rhs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">LinearOp</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="c1"># alpha = jnp.matmul(r0.T, z0) / jnp.matmul(d.T, v)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># is_zero = less_than_for_arr(alpha, bool_less_than=is_zero, eps=eps)</span>
+        <span class="n">is_zero</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="n">eps</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">is_zero</span><span class="p">,</span> <span class="n">ones_num_rhs</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">is_zero</span><span class="p">,</span> <span class="n">zeros_num_rhs</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+
+        <span class="c1"># alpha = jnp.diag(alpha)  # only diagonal alpha is used</span>
+        <span class="c1"># We&#39;ll cancel out any updates by setting alpha=0 for any vector that has already converged</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">has_converged</span><span class="p">,</span> <span class="n">zeros_num_rhs</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">u</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">d</span>
+        <span class="n">r1</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">v</span>
+
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">precondition</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">is_zero</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">&lt;</span> <span class="n">eps</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">is_zero</span><span class="p">,</span> <span class="n">ones_num_rhs</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span> <span class="n">z1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">beta</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">is_zero</span><span class="p">,</span> <span class="n">zeros_num_rhs</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">z1</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">d</span>
+
+        <span class="k">if</span> <span class="n">n_tridiag</span><span class="p">:</span>
+            <span class="n">alpha_tridiag</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">[:</span><span class="n">n_tridiag</span><span class="p">]</span>
+            <span class="n">beta_tridiag</span> <span class="o">=</span> <span class="n">beta</span><span class="p">[:</span><span class="n">n_tridiag</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">z1</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">alpha_tridiag</span><span class="p">,</span> <span class="n">beta_tridiag</span><span class="p">,</span> <span class="n">is_zero</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">z1</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">is_zero</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">LinearOp</span><span class="p">):</span>
+        <span class="n">linear_cg_updates</span> <span class="o">=</span> <span class="n">jit</span><span class="p">(</span><span class="n">_linear_cg_updates</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;n_tridiag&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">linear_cg_updates</span> <span class="o">=</span> <span class="n">jit</span><span class="p">(</span><span class="n">_linear_cg_updates</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;n_tridiag&quot;</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter_cg</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n_tridiag</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">alpha_tridiag</span><span class="p">,</span> <span class="n">beta_tridiag</span><span class="p">,</span> <span class="n">is_zero</span> <span class="o">=</span> <span class="n">linear_cg_updates</span><span class="p">(</span>
+                <span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">n_tridiag</span><span class="p">,</span> <span class="n">is_zero</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">is_zero</span> <span class="o">=</span> <span class="n">linear_cg_updates</span><span class="p">(</span>
+                <span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">n_tridiag</span><span class="p">,</span> <span class="n">is_zero</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">n_tridiag</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_tridiag_iter</span> <span class="ow">and</span> <span class="n">update_tridiag</span><span class="p">:</span>
+            <span class="c1">### TODO implement setting coverged alpha_tridiag 0.</span>
+            <span class="n">alpha_tridiag_is_zero</span> <span class="o">=</span> <span class="n">alpha_tridiag</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="c1"># alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(1)</span>
+            <span class="n">alpha_tridiag</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                <span class="n">alpha_tridiag_is_zero</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alpha_tridiag</span><span class="p">)),</span> <span class="n">alpha_tridiag</span>
+            <span class="p">)</span>
+            <span class="n">alpha_reciprocal</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">alpha_tridiag</span>
+            <span class="c1"># alpha_tridiag = alpha_tridiag.at[alpha_tridiag_is_zero].set(0)</span>
+            <span class="n">alpha_tridiag</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                <span class="n">alpha_tridiag_is_zero</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alpha_tridiag</span><span class="p">)),</span> <span class="n">alpha_tridiag</span>
+            <span class="p">)</span>
+
+            <span class="c1"># print(alpha_reciprocal)</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">t_mat</span> <span class="o">=</span> <span class="n">t_mat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">alpha_reciprocal</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">t_mat</span> <span class="o">=</span> <span class="n">t_mat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                    <span class="n">alpha_reciprocal</span> <span class="o">+</span> <span class="n">prev_beta</span> <span class="o">*</span> <span class="n">prev_alpha_reciprocal</span>
+                <span class="p">)</span>
+                <span class="n">t_mat</span> <span class="o">=</span> <span class="n">t_mat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">prev_beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">prev_alpha_reciprocal</span>
+                <span class="p">)</span>
+                <span class="n">t_mat</span> <span class="o">=</span> <span class="n">t_mat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">t_mat</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="c1"># if jnp.max(t_mat[j - 1, j]) &lt; 1e-06:</span>
+                <span class="c1">#     update_tridiag = False</span>
+                <span class="n">update_tridiag</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t_mat</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">1e-06</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">update_tridiag</span><span class="p">,</span>
+                    <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>  <span class="c1"># lax.cond and lax.select, which is faster?</span>
+            <span class="n">last_tridiag_iter</span> <span class="o">=</span> <span class="n">j</span>
+
+            <span class="n">prev_alpha_reciprocal</span> <span class="o">=</span> <span class="n">alpha_reciprocal</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_beta</span> <span class="o">=</span> <span class="n">beta_tridiag</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">r0_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">r0_norm</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">rhs_is_zero</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)),</span> <span class="n">r0_norm</span><span class="p">)</span>
+        <span class="n">has_converged</span> <span class="o">=</span> <span class="n">r0_norm</span> <span class="o">&lt;</span> <span class="n">stop_updating_after</span>
+
+        <span class="n">r0_norm_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">r0_norm_mean</span> <span class="o">&lt;</span> <span class="n">tolerance</span>
+        <span class="k">if</span> <span class="n">print_process</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;j=</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2"> r1norm: </span><span class="si">{</span><span class="n">r0_norm_mean</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1">## judge convergence, in the source of gpytorch, minimum_iteration is set to 10</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">j</span> <span class="o">&gt;=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_iter_cg</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">converged</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">n_tridiag</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_tridiag_iter</span><span class="p">,</span> <span class="n">max_iter_cg</span><span class="p">))</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">converged</span> <span class="ow">and</span> <span class="n">print_process</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Did not converge after </span><span class="si">{</span><span class="n">max_iter_cg</span><span class="si">}</span><span class="s2"> iterations. Final residual norm was </span><span class="si">{</span><span class="n">r0_norm_mean</span><span class="si">}</span><span class="s2">. consider raising max_cg_iter or rank of the preconditioner.&quot;</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_tridiag</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">u</span> <span class="o">*</span> <span class="n">rhs_norm</span><span class="p">,</span>
+            <span class="n">j</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span>
+                <span class="n">t_mat</span><span class="p">[:</span> <span class="n">last_tridiag_iter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:</span> <span class="n">last_tridiag_iter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">u</span> <span class="o">*</span> <span class="n">rhs_norm</span><span class="p">,</span> <span class="n">j</span></div>
+
+    <span class="c1"># retval = [u * rhs_norm]</span>
+    <span class="c1"># if n_tridiag:</span>
+    <span class="c1">#     retval.append(</span>
+    <span class="c1">#         jnp.transpose(</span>
+    <span class="c1">#             t_mat[: last_tridiag_iter + 1, : last_tridiag_iter + 1], (2, 0, 1)</span>
+    <span class="c1">#         )</span>
+    <span class="c1">#     )</span>
+    <span class="c1"># if return_iter_cg:</span>
+    <span class="c1">#     retval.append(j)</span>
+    <span class="c1"># return retval</span>
+
+
+<div class="viewcode-block" id="cg_bbmm">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.conjugate_gradient.cg_bbmm">[docs]</a>
+<span class="k">def</span> <span class="nf">cg_bbmm</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">,</span>
+    <span class="n">precondition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_iter_cg</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">tolerance</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">print_process</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">eps</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+    <span class="n">stop_updating_after</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    function to check if we can use simple preconditiond conjugate gradient (PCG) in Algorithm 1, Appendix A.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">precondition</span><span class="p">:</span>
+        <span class="n">precondition</span> <span class="o">=</span> <span class="n">precondition_identity</span>
+    <span class="c1">### initial setting</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>  <span class="c1">## current solution</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>  <span class="c1">## current residual</span>
+
+    <span class="c1"># Get the norm of the rhs - used for convergence checks</span>
+    <span class="c1"># Here we&#39;re going to make almost-zero norms actually be 1 (so we don&#39;t get divide-by-zero issues)</span>
+    <span class="c1"># But we&#39;ll store which norms were actually close to zero</span>
+    <span class="n">rhs_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>
+    <span class="n">rhs_is_zero</span> <span class="o">=</span> <span class="n">rhs_norm</span> <span class="o">&lt;</span> <span class="n">eps</span>
+    <span class="k">if</span> <span class="n">rhs_is_zero</span><span class="p">:</span>
+        <span class="n">rhs_norm</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Let&#39;s normalize. We&#39;ll un-normalize afterwards</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">/</span> <span class="n">rhs_norm</span>
+
+    <span class="c1"># Sometime we&#39;re lucky and the preconditioner solves the system right away</span>
+    <span class="c1"># Check for convergence</span>
+    <span class="n">r0_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>
+    <span class="n">has_converged</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">r0_norm</span> <span class="o">&lt;</span> <span class="n">stop_updating_after</span>
+    <span class="p">)</span>  <span class="c1"># at this point normal &quot;&lt;&quot; can be used, because we do not jit entirely, in future we should use lax.select</span>
+
+    <span class="n">z0</span> <span class="o">=</span> <span class="n">precondition</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>  <span class="c1">## preconditioned residual</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">z0</span>  <span class="c1">## search direction for next solution</span>
+
+    <span class="nd">@jit</span>
+    <span class="k">def</span> <span class="nf">linear_cg_updates</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">u</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">d</span>
+        <span class="n">r1</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">v</span>
+
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">precondition</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r1</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">z1</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">z1</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">d</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">r1</span>
+        <span class="n">z0</span> <span class="o">=</span> <span class="n">z1</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter_cg</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">linear_cg_updates</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+
+        <span class="n">r0_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>
+        <span class="c1"># residual_norm.masked_fill_(rhs_is_zero, 0)</span>
+        <span class="n">has_converged</span> <span class="o">=</span> <span class="n">r0_norm</span> <span class="o">&lt;</span> <span class="n">stop_updating_after</span>
+
+        <span class="k">if</span> <span class="n">print_process</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;j=</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2"> r1norm: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span>
+        <span class="c1">## judge convergence, in the source of gpytorch, minimum_iteration is set to 10</span>
+        <span class="k">if</span> <span class="n">j</span> <span class="o">&gt;=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_iter_cg</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="n">converged</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">converged</span> <span class="ow">and</span> <span class="n">print_process</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Did not converge after </span><span class="si">{</span><span class="n">max_iter_cg</span><span class="si">}</span><span class="s2"> iterations. Final residual norm was </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">u</span> <span class="o">*</span> <span class="n">rhs_norm</span></div>
+
+
+
+<div class="viewcode-block" id="bcg_bbmm">
+<a class="viewcode-back" href="../../../bbmm.utils.html#bbmm.utils.conjugate_gradient.bcg_bbmm">[docs]</a>
+<span class="k">def</span> <span class="nf">bcg_bbmm</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">,</span>
+    <span class="n">rhs</span><span class="p">,</span>
+    <span class="n">precondition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_iter_cg</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">tolerance</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">print_process</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">eps</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    function to chekck if we can implement batched preconditioned conjuaget gradient Algorithm 2 except for calculating T.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">precondition</span><span class="p">:</span>
+        <span class="n">precondition</span> <span class="o">=</span> <span class="n">precondition_identity</span>
+    <span class="c1">### initial setting</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>  <span class="c1">## current solution</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">rhs</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>  <span class="c1">## current residual</span>
+
+    <span class="c1"># Get the norm of the rhs - used for convergence checks</span>
+    <span class="c1"># Here we&#39;re going to make almost-zero norms actually be 1 (so we don&#39;t get divide-by-zero issues)</span>
+    <span class="c1"># But we&#39;ll store which norms were actually close to zero</span>
+    <span class="n">rhs_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>
+    <span class="n">rhs_is_zero</span> <span class="o">=</span> <span class="n">rhs_norm</span> <span class="o">&lt;</span> <span class="n">eps</span>
+    <span class="k">if</span> <span class="n">rhs_is_zero</span><span class="p">:</span>
+        <span class="n">rhs_norm</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Let&#39;s normalize. We&#39;ll un-normalize afterwards</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">/</span> <span class="n">rhs_norm</span>
+
+    <span class="n">z0</span> <span class="o">=</span> <span class="n">precondition</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>  <span class="c1">## preconditioned residual</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">z0</span>  <span class="c1">## search direction for next solution</span>
+
+    <span class="nd">@jit</span>
+    <span class="k">def</span> <span class="nf">linear_cg_updates</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">u</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span>
+        <span class="n">r1</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span>
+
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">precondition</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">r1</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">z1</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">z1</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">r1</span>
+        <span class="n">z0</span> <span class="o">=</span> <span class="n">z1</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter_cg</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">linear_cg_updates</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+
+        <span class="n">r0_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># residual_norm.masked_fill_(rhs_is_zero, 0)</span>
+        <span class="c1"># torch.lt(residual_norm, stop_updating_after, out=has_converged)</span>
+        <span class="k">if</span> <span class="n">print_process</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;j=</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2"> r1norm: </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span>
+        <span class="c1">## judge convergence, in the source of gpytorch, minimum_iteration is set to 10</span>
+        <span class="k">if</span> <span class="n">j</span> <span class="o">&gt;=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_iter_cg</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="n">converged</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">converged</span> <span class="ow">and</span> <span class="n">print_process</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Did not converge after </span><span class="si">{</span><span class="n">max_iter_cg</span><span class="si">}</span><span class="s2"> iterations. Final residual norm was </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r0_norm</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">u</span> <span class="o">*</span> <span class="n">rhs_norm</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kenta Ogawa.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
