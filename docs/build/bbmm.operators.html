@@ -42,11 +42,76 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="Examples/sin1d.html">Sin 1D</a></li>
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">bbmm.operators package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bbmm.operators.added_diag_linear_operator">bbmm.operators.added_diag_linear_operator module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.added_diag_linear_operator.AddedDiagLinearOp"><code class="docutils literal notranslate"><span class="pre">AddedDiagLinearOp</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.added_diag_linear_operator.AddedDiagLinearOp.matmul"><code class="docutils literal notranslate"><span class="pre">AddedDiagLinearOp.matmul()</span></code></a></li>
 </ul>
-
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators.dense_linear_operator">bbmm.operators.dense_linear_operator module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.dense_linear_operator.DenseLinearOp"><code class="docutils literal notranslate"><span class="pre">DenseLinearOp</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.dense_linear_operator.DenseLinearOp.matmul"><code class="docutils literal notranslate"><span class="pre">DenseLinearOp.matmul()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.dense_linear_operator.DenseLinearOp.shape"><code class="docutils literal notranslate"><span class="pre">DenseLinearOp.shape</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.dense_linear_operator.DenseLinearOp.t_matmul"><code class="docutils literal notranslate"><span class="pre">DenseLinearOp.t_matmul()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bbmm.operators.dense_linear_operator.to_linear_operator"><code class="docutils literal notranslate"><span class="pre">to_linear_operator()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators.diag_linear_operator">bbmm.operators.diag_linear_operator module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.diag_linear_operator.DiagLinearOp"><code class="docutils literal notranslate"><span class="pre">DiagLinearOp</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.diag_linear_operator.DiagLinearOp.matmul"><code class="docutils literal notranslate"><span class="pre">DiagLinearOp.matmul()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.diag_linear_operator.DiagLinearOp.shape"><code class="docutils literal notranslate"><span class="pre">DiagLinearOp.shape</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.diag_linear_operator.DiagLinearOp.sqrt"><code class="docutils literal notranslate"><span class="pre">DiagLinearOp.sqrt()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators.lazy_evaluated_kernel_matrix">bbmm.operators.lazy_evaluated_kernel_matrix module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.lazy_evaluated_kernel_matrix.LazyEvaluatedKernelMatrix"><code class="docutils literal notranslate"><span class="pre">LazyEvaluatedKernelMatrix</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.lazy_evaluated_kernel_matrix.LazyEvaluatedKernelMatrix.matmul"><code class="docutils literal notranslate"><span class="pre">LazyEvaluatedKernelMatrix.matmul()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.lazy_evaluated_kernel_matrix.LazyEvaluatedKernelMatrix.set_theta"><code class="docutils literal notranslate"><span class="pre">LazyEvaluatedKernelMatrix.set_theta()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.lazy_evaluated_kernel_matrix.LazyEvaluatedKernelMatrix.setup_calc_K_row"><code class="docutils literal notranslate"><span class="pre">LazyEvaluatedKernelMatrix.setup_calc_K_row()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.lazy_evaluated_kernel_matrix.LazyEvaluatedKernelMatrix.shape"><code class="docutils literal notranslate"><span class="pre">LazyEvaluatedKernelMatrix.shape</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators.psd_sum_linear_operator">bbmm.operators.psd_sum_linear_operator module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.psd_sum_linear_operator.PsdSumLinearOp"><code class="docutils literal notranslate"><span class="pre">PsdSumLinearOp</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.psd_sum_linear_operator.PsdSumLinearOp.left_term_of_trace"><code class="docutils literal notranslate"><span class="pre">PsdSumLinearOp.left_term_of_trace()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.psd_sum_linear_operator.PsdSumLinearOp.zero_mean_mvn_samples"><code class="docutils literal notranslate"><span class="pre">PsdSumLinearOp.zero_mean_mvn_samples()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators.root_linear_operator">bbmm.operators.root_linear_operator module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.root_linear_operator.RootLinearOp"><code class="docutils literal notranslate"><span class="pre">RootLinearOp</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.root_linear_operator.RootLinearOp.matmul"><code class="docutils literal notranslate"><span class="pre">RootLinearOp.matmul()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.root_linear_operator.RootLinearOp.root_decomposition"><code class="docutils literal notranslate"><span class="pre">RootLinearOp.root_decomposition()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.root_linear_operator.RootLinearOp.shape"><code class="docutils literal notranslate"><span class="pre">RootLinearOp.shape</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators.sum_linear_operator">bbmm.operators.sum_linear_operator module</a><ul>
+<li><a class="reference internal" href="#bbmm.operators.sum_linear_operator.SumLinearOp"><code class="docutils literal notranslate"><span class="pre">SumLinearOp</span></code></a><ul>
+<li><a class="reference internal" href="#bbmm.operators.sum_linear_operator.SumLinearOp.matmul"><code class="docutils literal notranslate"><span class="pre">SumLinearOp.matmul()</span></code></a></li>
+<li><a class="reference internal" href="#bbmm.operators.sum_linear_operator.SumLinearOp.shape"><code class="docutils literal notranslate"><span class="pre">SumLinearOp.shape</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-bbmm.operators">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
         </div>
       </div>
     </nav>

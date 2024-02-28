@@ -46,6 +46,6 @@ source_suffix = {
     ".md": "markdown",
 }
 
-masetr_doc = "index.rst"
+# masetr_doc = "index.rst"
 
-napoleon_custom_sections = [("Returns", "params_style")]
+# napoleon_custom_sections = [("Returns", "params_style")]
