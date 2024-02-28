@@ -1,0 +1,4 @@
+## Sin 1D
+```{autofunction} bbmm.utils.calc_loss_dloss.setup_loss_dloss_mpcg
+:members:
+```
