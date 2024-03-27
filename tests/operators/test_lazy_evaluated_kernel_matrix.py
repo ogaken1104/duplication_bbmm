@@ -1,17 +1,18 @@
+import time
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 import stopro.GP.gp_sinusoidal_independent as gp_sinusoidal_independent
-from jax.config import config
 from jax import jit
-import time
+from jax.config import config
 from stopro.data_handler.data_handle_module import HdfOperator
 from stopro.GP.kernels import define_kernel
 from stopro.sub_modules.load_modules import load_data, load_params
 
-from bbmm.operators.lazy_evaluated_kernel_matrix import LazyEvaluatedKernelMatrix
 from bbmm.operators.added_diag_linear_operator import AddedDiagLinearOp
 from bbmm.operators.diag_linear_operator import DiagLinearOp
+from bbmm.operators.lazy_evaluated_kernel_matrix import LazyEvaluatedKernelMatrix
 
 config.update("jax_enable_x64", True)
 
@@ -68,10 +69,10 @@ def test_lazy_evaluated_kernel_matrix(
         ]
     )
 
-    Kss = gp_model.trainingKs.copy()
-    for i in range(len(Kss)):
-        for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
-            Kss[i] = [Kss[j][i]] + Kss[i]
+    Kss = gp_model.trainingKs
+    # for i in range(len(Kss)):
+    #     for j in list(range(len(Kss) - len(Kss[i])))[::-1]:
+    #         Kss[i] = [Kss[j][i]] + Kss[i]
 
     right_matrix = jax.random.normal(
         jax.random.PRNGKey(0), (params_prepare["num_points"]["training"]["sum"], 11)
@@ -83,7 +84,7 @@ def test_lazy_evaluated_kernel_matrix(
         Kss=Kss,
         sec1=gp_model.sec_tr,
         sec2=gp_model.sec_tr,
-        jiggle=params_model["epsilon"],
+        # jiggle=params_model["epsilon"],
     )
     lazy_evaluated_kernel_matrix.set_theta(init)
 
@@ -96,13 +97,13 @@ def test_lazy_evaluated_kernel_matrix(
     start_time = time.time()
     K_x_right_matrix = lazy_evaluated_kernel_matrix.matmul(rhs=right_matrix)
     end_time = time.time()
+
     print(f"elapsed time for trainingKs: {end_time - start_time:.4f}")
 
     K = gp_model.trainingK_all(init, r_train)
-    K = gp_model.add_eps_to_sigma(K, params_model["epsilon"], noise_parameter=None)
     K_x_right_matrix_naive = jnp.matmul(K, right_matrix)
 
-    assert jnp.allclose(K_x_right_matrix_naive, K_x_right_matrix)
+    assert jnp.allclose(K_x_right_matrix, K_x_right_matrix_naive)
     assert jnp.all(lazy_evaluated_kernel_matrix._diagonal() == jnp.diag(K))
 
     # assert jnp.all(lazy_evaluated_kernel_matrix[0] == jnp.array([1, 2]))
@@ -125,6 +126,8 @@ def test_lazy_evaluated_kernel_matrix(
         DiagLinearOp(jnp.full(gp_model.sec_tr[-1], params_model["epsilon"])),
     )
     K_x_right_matrix_added_diag = added_diag.matmul(rhs=right_matrix)
+    K = gp_model.add_eps_to_sigma(K, params_model["epsilon"], noise_parameter=None)
+    K_x_right_matrix_naive = jnp.matmul(K, right_matrix)
     assert jnp.allclose(K_x_right_matrix_naive, K_x_right_matrix_added_diag)
     # assert jnp.all(added_diag._diagonal() == jnp.diag(K))
     # assert jnp.all(
@@ -134,16 +137,12 @@ def test_lazy_evaluated_kernel_matrix(
     ### check derivative
     gp_model.setup_Ks_dKdtheta()
     dKss = gp_model.Ks_dKdtheta.copy()
-    for i in range(len(dKss)):
-        for j in list(range(len(dKss) - len(dKss[i])))[::-1]:
-            dKss[i] = [dKss[j][i]] + dKss[i]
     lazy_evaluated_kernel_matrix_derivative = LazyEvaluatedKernelMatrix(
         r1s=r_train,
         r2s=r_train,
         Kss=dKss,
         sec1=gp_model.sec_tr,
         sec2=gp_model.sec_tr,
-        calc_derivative=True,
         num_component=len(init),
     )
     lazy_evaluated_kernel_matrix_derivative.set_theta(init)

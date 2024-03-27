@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import numpy as np
 
-from tests.utils.test_calc_loss_sin_linearop import calc_loss_sin
+from tests.loss_dloss.test_calc_loss_sin_linearop import calc_loss_sin
 
 
 def test_loss_sin1d_1000(seed):
