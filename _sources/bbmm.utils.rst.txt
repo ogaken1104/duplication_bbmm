@@ -60,14 +60,6 @@ bbmm.utils.conjugate\_gradient module
    :undoc-members:
    :show-inheritance:
 
-bbmm.utils.mmm module
----------------------
-
-.. automodule:: bbmm.utils.mmm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 bbmm.utils.preconditioner module
 --------------------------------
 
