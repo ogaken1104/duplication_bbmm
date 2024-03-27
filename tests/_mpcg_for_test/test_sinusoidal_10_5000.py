@@ -1,6 +1,6 @@
 from jax.config import config
 
-from tests.mpcg_for_test.calc_three_terms import calc_three_terms
+from tests._mpcg_for_test.calc_three_terms import calc_three_terms
 
 config.update("jax_enable_x64", True)
 

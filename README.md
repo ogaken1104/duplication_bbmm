@@ -54,11 +54,13 @@ by running `tests/for_paper/check_time_for_sin.py`, we can obtain the results in
   - calc_loss_dloss.py
   - calc_prediction.py
   - ~~calc_trace~~
-  - ~~mmm~~
 
 ## Test
-- what to test
-    - each value of linear_solve, log determinant, trace term
+- compeleted
+  - **tests/functions, tests/operators, tests/utils**, tests/loss_dloss, tests/for_paper
+  - loss_dloss: test for calculating loss and derivative of loss for many problems
+  - for_paper: test for obtaining the results in the master thesis
+  - _mpcg_for_test: not latest no need to use
 - how to test
     - run `pytest ./test`. then all test in ./test is done
 
